@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import CustomUser
+from .models import CustomUser, Outreach, OutreachTemplate
 
 
 class CustomUserAdmin(UserAdmin):
@@ -21,3 +21,6 @@ class CustomUserAdmin(UserAdmin):
 
 
 admin.site.register(CustomUser, CustomUserAdmin)
+
+admin.site.register(Outreach)
+admin.site.register(OutreachTemplate)
