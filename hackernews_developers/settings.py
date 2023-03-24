@@ -66,8 +66,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-if DEBUG:
-  MIDDLEWARE.append("kolo.middleware.KoloMiddleware")
+# if DEBUG:
+#   MIDDLEWARE.append("kolo.middleware.KoloMiddleware")
 
 ROOT_URLCONF = 'hackernews_developers.urls'
 
@@ -164,8 +164,6 @@ AUTHENTICATION_BACKENDS = [
 ]
 SITE_ID = 1
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-
 LOGIN_REDIRECT_URL = "home"
 ACCOUNT_LOGOUT_REDIRECT_URL = "home"
 
@@ -230,6 +228,8 @@ DEFAULT_FROM_EMAIL = "rasul@hnprofiles.com"
 SERVER_EMAIL = "error@hnprofiles.com"
 
 if DEBUG:
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    EMAIL_HOST = "localhost"
+    EMAIL_PORT = 1025
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 else:
     EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"

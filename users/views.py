@@ -3,12 +3,21 @@ import stripe
 
 from django.urls import reverse_lazy
 from django.shortcuts import redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.views.generic import UpdateView
+from django.views.generic import UpdateView, FormView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from django.contrib import messages
+from django_q.tasks import async_task
+
+from .forms import SupportForm, CreateOutreachTemplateForm, UpdateOutreachTemplateForm
+from .tasks import email_support_request
+from .models import OutreachTemplate, Outreach
+
 
 from djstripe import models, webhooks, settings as djstripe_settings
+from allauth.account.utils import send_email_confirmation
 
 from .models import CustomUser
 from hackernews_developers.utils import add_users_context
@@ -19,7 +28,7 @@ logger = logging.getLogger(__file__)
 class UserSettingsView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     login_url = "account_login"
     model = CustomUser
-    fields = ["name"]
+    fields = ["name", "email"]
     success_message = "User Profile Updated"
     success_url = reverse_lazy("settings")
     template_name = "account/settings.html"
@@ -81,3 +90,86 @@ def create_customer_portal_session(request):
     )
 
     return redirect(session.url)
+
+def resend_email_confirmation_email(request):
+    user = request.user
+    send_email_confirmation(request, user, user.email)
+
+    return redirect("settings")
+
+class SupportView(LoginRequiredMixin, SuccessMessageMixin, FormView):
+    login_url = "account_login"
+    template_name = "account/support.html"
+    form_class = SupportForm
+
+    def get_success_url(self):
+        messages.add_message(self.request, messages.INFO, "Thanks for sending your feedback. I'll get back to you ASAP.")
+        return reverse_lazy("support")
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        user = self.request.user
+        if user.is_authenticated:
+          add_users_context(context, user)
+
+        return context
+
+    def form_valid(self, form):
+        async_task(email_support_request, form.cleaned_data, hook='hooks.email_sent')
+        return super(SupportView, self).form_valid(form)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['current_user'] = self.request.user
+        return kwargs
+
+class TemplateCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    login_url = "account_login"
+    model = OutreachTemplate
+    form_class = CreateOutreachTemplateForm
+    template_name = "account/create-outreach-template.html"
+    success_url = reverse_lazy("templates")
+    success_message = "New Template was Created"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        user = self.request.user
+
+        context["templates"] = OutreachTemplate.objects.filter(author=user)
+        context["update_form"] = UpdateOutreachTemplateForm
+
+        if user.is_authenticated:
+          add_users_context(context, user)
+
+        return context
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        self.object = form.save()
+
+        return super(TemplateCreateView, self).form_valid(form)
+
+class TemplateUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    login_url = "account_login"
+    model = OutreachTemplate
+    form_class = UpdateOutreachTemplateForm
+    template_name = "account/update-outreach-template.html"
+    success_url = reverse_lazy("templates")
+    success_message = "Template was Updated"
+
+    def post(self, request, *args, **kwargs):
+        if "delete_object" in request.POST:
+            return self.delete(request, *args, **kwargs)
+        else:
+            return super().post(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.object.delete()
+
+        messages.success(request, "Template was Deleted")
+        success_url = self.get_success_url()
+        return HttpResponseRedirect(success_url)
