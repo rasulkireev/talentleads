@@ -13,7 +13,7 @@ from django_q.tasks import async_task
 
 from .forms import SupportForm, CreateOutreachTemplateForm, UpdateOutreachTemplateForm
 from .tasks import email_support_request
-from .models import OutreachTemplate, Outreach
+from .models import OutreachTemplate
 
 
 from djstripe import models, webhooks, settings as djstripe_settings

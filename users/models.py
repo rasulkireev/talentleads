@@ -30,9 +30,4 @@ class Outreach(TimeStampedModel):
 
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="outreach")
     receiver = models.ForeignKey('profiles.profile', on_delete=models.CASCADE, related_name="outreach")
-    subject_line = models.CharField(max_length=256)
-    text = models.TextField(blank=True)
-    cc_s = models.CharField(max_length=256)
-
-    def get_absolute_url(self):
-        return reverse("outreach", kwargs={"id": self.id})
+    template = models.ForeignKey('OutreachTemplate', on_delete=models.CASCADE, related_name="outreach")

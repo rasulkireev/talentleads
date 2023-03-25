@@ -9,13 +9,14 @@ from django_filters.views import FilterView
 from django.core.paginator import Paginator
 from django.shortcuts import redirect
 from django_q.tasks import async_task
+from django.contrib import messages
 
 from .models import Profile
 from .tasks import analyze_hn_page, send_outreach_email_task
 from .filters import ProfileFilter
 
 from hackernews_developers.utils import floor_to_tens, add_users_context
-from users.models import OutreachTemplate
+from users.models import OutreachTemplate, Outreach
 
 logger = logging.getLogger(__file__)
 
@@ -79,14 +80,25 @@ def send_outreach_email(request, profile_id, email_template_id):
     profile = Profile.objects.get(id=profile_id)
     template = OutreachTemplate.objects.get(id=email_template_id)
 
-    async_task(
-      send_outreach_email_task,
-      template.subject_line,
-      template.text,
-      profile.email,
-      user,
-      template.cc_s,
-      hook='hooks.email_sent'
+    obj, created = Outreach.objects.get_or_create(
+      author=user,
+      receiver=profile,
+      template=template
     )
+    logger.info(f"obj, created: {obj}, {created}")
+
+    if created:
+      async_task(
+        send_outreach_email_task,
+        template.subject_line,
+        template.text,
+        profile.email,
+        user,
+        template.cc_s,
+        hook='hooks.email_sent'
+      )
+      messages.add_message(request, messages.INFO, "Email Sent. Check your email, you were CC'd.")
+    else:
+      messages.add_message(request, messages.WARNING, "You have already sent the email.")
 
     return redirect(reverse("profile", kwargs={"pk": profile_id}))
