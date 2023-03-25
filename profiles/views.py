@@ -3,17 +3,19 @@ import logging
 from django.views.generic import DetailView, FormView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django import forms
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django_q.tasks import async_task, result
 from django_filters.views import FilterView
 from django.core.paginator import Paginator
+from django.shortcuts import redirect
+from django_q.tasks import async_task
 
 from .models import Profile
-from .tasks import analyze_hn_page
+from .tasks import analyze_hn_page, send_outreach_email_task
 from .filters import ProfileFilter
 
 from hackernews_developers.utils import floor_to_tens, add_users_context
-
+from users.models import OutreachTemplate
 
 logger = logging.getLogger(__file__)
 
@@ -44,6 +46,7 @@ class ProfileDetailView(DetailView):
         user = self.request.user
         if user.is_authenticated:
             add_users_context(context, user)
+            context["outreach_templates"] = OutreachTemplate.objects.filter(author=user)
 
         if self.object:
             context["profile_capacity"] = self.object.capacity.split(",")
@@ -67,3 +70,23 @@ class TriggerAsyncTask(LoginRequiredMixin, UserPassesTestMixin, FormView):
         who_wants_to_be_hired_post_id = form.cleaned_data.get('who_wants_to_be_hired_post_id')
         async_task(analyze_hn_page, who_wants_to_be_hired_post_id, hook='hooks.print_result')
         return super(TriggerAsyncTask, self).form_valid(form)
+
+def send_outreach_email(request, profile_id, email_template_id):
+    logger.info(f"profile_id: {profile_id}")
+    logger.info(f"email_template_id: {email_template_id}")
+
+    user = request.user
+    profile = Profile.objects.get(id=profile_id)
+    template = OutreachTemplate.objects.get(id=email_template_id)
+
+    async_task(
+      send_outreach_email_task,
+      template.subject_line,
+      template.text,
+      profile.email,
+      user,
+      template.cc_s,
+      hook='hooks.email_sent'
+    )
+
+    return redirect(reverse("profile", kwargs={"pk": profile_id}))
