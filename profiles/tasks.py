@@ -5,6 +5,7 @@ import logging
 from django.conf import settings
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.mail import EmailMessage
 from django_q.models import Schedule
 import openai
 
@@ -137,3 +138,16 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
 #     schedule_type=Schedule.CRON,
 #     cron = '0 0 * * *'
 # )
+
+def send_outreach_email_task(subject_line, message, receiver, user, send_to_list):
+    cc_s = [email.strip() for email in send_to_list.split(',') if send_to_list] + [user.email]
+    logger.info(f"Sending email to {receiver} with cc {cc_s}")
+    email = EmailMessage(
+        subject = subject_line,
+        body = message,
+        from_email = "rasul@hnprofiles.com",
+        to = [receiver],
+        reply_to=[user.email],
+        cc = cc_s,
+    )
+    email.send(fail_silently=True)
