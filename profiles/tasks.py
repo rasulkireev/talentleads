@@ -124,8 +124,7 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
                 capacity=cleaned_data['capacity'],
             )
             profile.save()
-            for technology in technologies:
-              logger.info(f"Adding {technology['name']} techonologies for profile {comment_id}")
+            logger.info(f"Adding {technologies} techonologies for profile {comment_id}")
             profile.technologies_used.set(technologies)
         else:
           logger.info(f"Profile for {comment_id} already exists.")
