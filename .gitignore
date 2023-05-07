@@ -1,3 +1,7 @@
+# Other
+emails/
+# notebooks/
+
 # DB
 backup-dbs/
 media/
