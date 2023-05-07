@@ -97,7 +97,9 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
                 technologies = []
                 for name in technology_names:
                     if name != "":
-                        obj, _ = Technology.objects.get_or_create(name=name)
+                        obj, created = Technology.objects.get_or_create(name=name)
+                        if created:
+                          logger.info(f"{obj} was created")
                         technologies.append(obj)
 
             profile = Profile(
@@ -122,9 +124,11 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
                 capacity=cleaned_data['capacity'],
             )
             profile.save()
+
+            logger.info(f"Saving {technologies} for {profile}")
             profile.technologies_used.set(technologies)
 
-            logger.info(f"Profile ({profile}) was created.")
+            logger.info(f"{profile} profile was created.")
         else:
           logger.info(f"Profile for {comment_id} already exists.")
 
