@@ -124,7 +124,7 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
             profile.save()
 
             logger.info(f"Saving {technologies} for {profile}")
-            profile.technologies_used.set(technologies)
+            profile.technologies_used.add(*technologies)
 
 
             logger.info(f"{profile} profile was created.")
