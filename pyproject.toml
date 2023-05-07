@@ -32,6 +32,8 @@ django = "^4.1.7"
 
 [tool.poetry.group.dev.dependencies]
 kolo = "^2.6.0"
+jupyterlab = "^3.6.3"
+pandas = "^2.0.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
