@@ -1,7 +1,7 @@
 from datetime import datetime
 
 def clean_profile_json_object(original_comment: dict, nlp_data: dict) -> dict:
-  nlp_data["years_of_experience"] = correct_years_of_experience_value(nlp_data['years_of_experience'], original_comment['text'])
+  nlp_data["years_of_experience"] = check_years_of_experience_value(nlp_data['years_of_experience'], original_comment['text'])
   nlp_data["level"] = check_that_level_is_one_the_allowed_values(nlp_data['level'])
 
   for key, value in nlp_data.items():
@@ -9,13 +9,12 @@ def clean_profile_json_object(original_comment: dict, nlp_data: dict) -> dict:
 
   return nlp_data
 
-
-def correct_years_of_experience_value(years: int, text: str) -> bool:
+def check_years_of_experience_value(years: int, text: str):
   """Python function to check that the estimated years of experience appears in the text."""
-  if str(years) in text:
+  if str(years) in text and isinstance(years, int):
       return years
   else:
-      return 0
+      return None
 
 def check_that_level_is_one_the_allowed_values(level: str) -> bool:
     if level in ["Senior", "Mid-level", "Junior", "Principal", "C-Level"]:

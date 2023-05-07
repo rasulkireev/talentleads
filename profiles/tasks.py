@@ -4,16 +4,17 @@ import httpx
 import logging
 from django.conf import settings
 from django.db import transaction
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import EmailMessage
 from django_q.models import Schedule
 import openai
+from typing import List
 
 from .models import Profile, Technology
 from .utils import clean_profile_json_object
 
 logger = logging.getLogger(__file__)
 openai.api_key = settings.OPENAI_KEY
+
 
 def analyze_hn_page(who_wants_to_be_hired_post_id):
     r = httpx.get(f'https://hacker-news.firebaseio.com/v0/item/{who_wants_to_be_hired_post_id}.json').json()
@@ -34,15 +35,12 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
 
             try:
               if json_profile["deleted"] == True:
-                  logger.info(f"Comment {comment_id} is deleted.")
                   continue
             except KeyError:
-                  logger.info(f"Comment {comment_id} is not deleted.")
+                  pass
 
-            logger.info(f"JSON for comment {comment_id}: {json_profile}")
             who_wants_to_be_hired_comment_id = int(json_profile['id'])
             hn_username = str(json_profile['by'])
-
 
             request = f"""Convert the following text:
                 ```
@@ -83,7 +81,12 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
             )
 
             converted_comment_response = completion.choices[0].message
-            json_converted_comment_response = json.loads(converted_comment_response.content)
+
+            try:
+              json_converted_comment_response = json.loads(converted_comment_response.content)
+            except json.decoder.JSONDecodeError as e:
+              continue
+
 
             cleaned_data = clean_profile_json_object(json_profile, json_converted_comment_response)
 
@@ -93,14 +96,9 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
 
                 technologies = []
                 for name in technology_names:
-                    if name == "":
-                        try:
-                            technology = Technology.objects.get(name=name)
-                            logger.info(f"{name} exists")
-                        except ObjectDoesNotExist:
-                            technology = Technology.objects.create(name=name)
-                            logger.info(f"Create entry for {name}")
-                        technologies.append(technology)
+                    if name != "":
+                        obj, _ = Technology.objects.get_or_create(name=name)
+                        technologies.append(obj)
 
             profile = Profile(
                 latest_who_wants_to_be_hired_id=who_wants_to_be_hired_id,
@@ -124,8 +122,9 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
                 capacity=cleaned_data['capacity'],
             )
             profile.save()
-            logger.info(f"Adding {technologies} techonologies for profile {comment_id}")
             profile.technologies_used.set(technologies)
+
+            logger.info(f"Profile ({profile}) was created.")
         else:
           logger.info(f"Profile for {comment_id} already exists.")
 
