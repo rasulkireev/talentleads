@@ -63,7 +63,7 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
                 - personal_website (valid url or empty)
                 - description (can't be empty)
                 - name (Full Name if mentioned)
-                - title (come up with a short - 6 words max- title based on one of the technologies_used and description, can't be empty)
+                - title (come up with a short - 6 words max - title based on one of the technologies_used and description, can't be empty)
                 - level (choose from these options: Junior, Mid-level, Senior, Principal, C-Level. figure out from description, can't be empty)
                 - years_of_experience (figure out from description, make a best guess, can't be empty. make sure this is an integer, so no values like 40+, only 40)
                 - capacity (string of comma separated values. options are 'Part-time Contractor', 'Full-time Contractor', 'Part-time Employee' and 'Full-time Employee', can't be empty)
@@ -93,13 +93,14 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
 
                 technologies = []
                 for name in technology_names:
-                    try:
-                        technology = Technology.objects.get(name=name)
-                        logger.info(f"{name} exists")
-                    except ObjectDoesNotExist:
-                        technology = Technology.objects.create(name=name)
-                        logger.info(f"Create entry for {name}")
-                    technologies.append(technology)
+                    if name == "":
+                        try:
+                            technology = Technology.objects.get(name=name)
+                            logger.info(f"{name} exists")
+                        except ObjectDoesNotExist:
+                            technology = Technology.objects.create(name=name)
+                            logger.info(f"Create entry for {name}")
+                        technologies.append(technology)
 
             profile = Profile(
                 latest_who_wants_to_be_hired_id=who_wants_to_be_hired_id,
@@ -123,7 +124,7 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
                 capacity=cleaned_data['capacity'],
             )
             profile.save()
-            logger.info(f"Adding techonologies for profile {comment_id}")
+            logger.info(f"Adding {technologies} techonologies for profile {comment_id}")
             profile.technologies_used.set(technologies)
         else:
           logger.info(f"Profile for {comment_id} already exists.")
