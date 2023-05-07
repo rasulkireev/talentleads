@@ -90,17 +90,15 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
 
             cleaned_data = clean_profile_json_object(json_profile, json_converted_comment_response)
 
-            # Create Technology Objects
-            with transaction.atomic():
-                technology_names = [name.strip() for name in cleaned_data['technologies_used'].split(',')]
+            technology_names = [name.strip() for name in cleaned_data['technologies_used'].split(',')]
 
-                technologies = []
-                for name in technology_names:
-                    if name != "":
-                        obj, created = Technology.objects.get_or_create(name=name)
-                        if created:
-                          logger.info(f"{obj} was created")
-                        technologies.append(obj)
+            technologies = []
+            for name in technology_names:
+                if name != "":
+                    obj, created = Technology.objects.get_or_create(name=name)
+                    if created:
+                      logger.info(f"{obj} was created")
+                    technologies.append(obj)
 
             profile = Profile(
                 latest_who_wants_to_be_hired_id=who_wants_to_be_hired_id,
@@ -127,6 +125,7 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
 
             logger.info(f"Saving {technologies} for {profile}")
             profile.technologies_used.set(technologies)
+
 
             logger.info(f"{profile} profile was created.")
         else:
