@@ -47,22 +47,22 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
                 into a JSON object with the following valid keys
                 (feel free to give me an value of empty string if there is no info,
                 also ignore the content in  brackets, it is only to explain what I need):
-                - location (can't be empty, max 256 characters)
-                - city (figure out from location, can't be empty, max 256 characters)
-                - country (figure out from location, can't be empty, max 256 characters)
-                - state (if country is USA please guess the state, otherwise empty string. keep the short format, like MA, NY, etc., max 256 characters)
+                - location (can't be empty)
+                - city (figure out from location, can't be empty)
+                - country (figure out from location, can't be empty)
+                - state (if country is USA please guess the state, otherwise empty string. keep the short format, like MA, NY, etc.)
                 - is_remote (boolean)
-                - willing_to_relocate (choose from: Yes, No, Maybe. can't be empty, max 256 characters)
+                - willing_to_relocate (choose from: Yes, No, Maybe. can't be empty)
                 - technologies_used (string of comma separated values. split values like HTML/CSS into HTML, CSS)
                 - resume_link (valid url or empty)
                 - email (valid email or empty)
                 - personal_website (valid url or empty)
                 - description (can't be empty)
-                - name (Full Name if mentioned, max 256 characters)
-                - title (come up with a short - 6 words max - title based on one of the technologies_used and description, can't be empty, max 256 characters)
-                - level (choose from these options: Junior, Mid-level, Senior, Principal, C-Level. figure out from description, can't be empty, max 256 characters)
+                - name (Full Name if mentioned)
+                - title (come up with a short - 6 words max - title based on one of the technologies_used and description, can't be empty)
+                - level (choose from these options: Junior, Mid-level, Senior, Principal, C-Level. figure out from description, can't be empty)
                 - years_of_experience (figure out from description, make a best guess, can't be empty. make sure this is an integer, so no values like 40+, only 40)
-                - capacity (string of comma separated values. options are 'Part-time Contractor', 'Full-time Contractor', 'Part-time Employee' and 'Full-time Employee', can't be empty, max 256 characters)
+                - capacity (string of comma separated values. options are 'Part-time Contractor', 'Full-time Contractor', 'Part-time Employee' and 'Full-time Employee', can't be empty)
 
                 Don't add any text and only respond with a JSON Object.
             """
