@@ -18,13 +18,13 @@ class Profile(TimeStampedModel):
     technologies_used = models.ManyToManyField("Technology", blank=True)
     tech_stack = models.ManyToManyField("Technology", related_name="profiles", blank=True, through="ProfileTechnology")
     years_of_experience = models.IntegerField(blank=True, null=True)
-    capacity = models.CharField(max_length=100, blank=True)
+    capacity = models.CharField(max_length=256, blank=True)
 
     # GEO
-    location = models.CharField(max_length=100, blank=True)
-    city = models.CharField(max_length=100, blank=True)
-    state = models.CharField(max_length=100, blank=True)
-    country = models.CharField(max_length=100, blank=True)
+    location = models.CharField(max_length=256, blank=True)
+    city = models.CharField(max_length=256, blank=True)
+    state = models.CharField(max_length=256, blank=True)
+    country = models.CharField(max_length=256, blank=True)
 
     # Secret
     name = models.CharField(max_length=256, blank=True)

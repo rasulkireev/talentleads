@@ -3,7 +3,6 @@ import json
 import httpx
 import logging
 from django.conf import settings
-from django.db import transaction
 from django.core.mail import EmailMessage
 from django_q.models import Schedule
 import openai
@@ -40,6 +39,7 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
             who_wants_to_be_hired_comment_id = int(json_profile['id'])
             hn_username = str(json_profile['by'])
 
+            logger.info(f"JSON for comment {comment_id}: {json_profile}")
             request = f"""Convert the following text:
                 ```
                 {json_profile['text']}
@@ -47,22 +47,22 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
                 into a JSON object with the following valid keys
                 (feel free to give me an value of empty string if there is no info,
                 also ignore the content in  brackets, it is only to explain what I need):
-                - location (can't be empty)
-                - city (figure out from location, can't be empty)
-                - country (figure out from location, can't be empty)
-                - state (if country is USA please guess the state, otherwise empty string. keep the short format, like MA, NY, etc.)
+                - location (can't be empty, max 256 characters)
+                - city (figure out from location, can't be empty, max 256 characters)
+                - country (figure out from location, can't be empty, max 256 characters)
+                - state (if country is USA please guess the state, otherwise empty string. keep the short format, like MA, NY, etc., max 256 characters)
                 - is_remote (boolean)
-                - willing_to_relocate (choose from: Yes, No, Maybe. can't be empty)
+                - willing_to_relocate (choose from: Yes, No, Maybe. can't be empty, max 256 characters)
                 - technologies_used (string of comma separated values. split values like HTML/CSS into HTML, CSS)
                 - resume_link (valid url or empty)
                 - email (valid email or empty)
                 - personal_website (valid url or empty)
                 - description (can't be empty)
-                - name (Full Name if mentioned)
-                - title (come up with a short - 6 words max - title based on one of the technologies_used and description, can't be empty)
-                - level (choose from these options: Junior, Mid-level, Senior, Principal, C-Level. figure out from description, can't be empty)
+                - name (Full Name if mentioned, max 256 characters)
+                - title (come up with a short - 6 words max - title based on one of the technologies_used and description, can't be empty, max 256 characters)
+                - level (choose from these options: Junior, Mid-level, Senior, Principal, C-Level. figure out from description, can't be empty, max 256 characters)
                 - years_of_experience (figure out from description, make a best guess, can't be empty. make sure this is an integer, so no values like 40+, only 40)
-                - capacity (string of comma separated values. options are 'Part-time Contractor', 'Full-time Contractor', 'Part-time Employee' and 'Full-time Employee', can't be empty)
+                - capacity (string of comma separated values. options are 'Part-time Contractor', 'Full-time Contractor', 'Part-time Employee' and 'Full-time Employee', can't be empty, max 256 characters)
 
                 Don't add any text and only respond with a JSON Object.
             """
@@ -82,14 +82,13 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
 
             try:
               json_converted_comment_response = json.loads(converted_comment_response.content)
-            except json.decoder.JSONDecodeError as e:
+            except json.decoder.JSONDecodeError:
               continue
 
 
             cleaned_data = clean_profile_json_object(json_profile, json_converted_comment_response)
 
             technology_names = [name.strip() for name in cleaned_data['technologies_used'].split(',')]
-
             technologies = []
             for name in technology_names:
                 if name != "":
