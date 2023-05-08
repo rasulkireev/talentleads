@@ -15,7 +15,8 @@ class Profile(TimeStampedModel):
     level = models.CharField(max_length=256, blank=True)
     willing_to_relocate = models.CharField(max_length=256, default="No")
     is_remote = models.BooleanField(default=False)
-    technologies_used = models.ManyToManyField("Technology", related_name="profile", blank=True)
+    technologies_used = models.ManyToManyField("Technology", blank=True)
+    tech_stack = models.ManyToManyField("Technology", related_name="profiles", blank=True, through="ProfileTechnology")
     years_of_experience = models.IntegerField(blank=True, null=True)
     capacity = models.CharField(max_length=100, blank=True)
 
@@ -46,3 +47,8 @@ class Technology(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+class ProfileTechnology(TimeStampedModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    technology = models.ForeignKey(Technology, on_delete=models.CASCADE)

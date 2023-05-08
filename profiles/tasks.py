@@ -7,14 +7,12 @@ from django.db import transaction
 from django.core.mail import EmailMessage
 from django_q.models import Schedule
 import openai
-from typing import List
 
 from .models import Profile, Technology
 from .utils import clean_profile_json_object
 
 logger = logging.getLogger(__file__)
 openai.api_key = settings.OPENAI_KEY
-
 
 def analyze_hn_page(who_wants_to_be_hired_post_id):
     r = httpx.get(f'https://hacker-news.firebaseio.com/v0/item/{who_wants_to_be_hired_post_id}.json').json()
@@ -55,13 +53,13 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
                 - state (if country is USA please guess the state, otherwise empty string. keep the short format, like MA, NY, etc.)
                 - is_remote (boolean)
                 - willing_to_relocate (choose from: Yes, No, Maybe. can't be empty)
-                - technologies_used (string of comma separated values. split values like HTML/CSS into HTML, CSS)
+                - tech_stack (string of comma separated values. split values like HTML/CSS into HTML, CSS)
                 - resume_link (valid url or empty)
                 - email (valid email or empty)
                 - personal_website (valid url or empty)
                 - description (can't be empty)
                 - name (Full Name if mentioned)
-                - title (come up with a short - 6 words max - title based on one of the technologies_used and description, can't be empty)
+                - title (come up with a short - 6 words max - title based on one of the tech_stack and description, can't be empty)
                 - level (choose from these options: Junior, Mid-level, Senior, Principal, C-Level. figure out from description, can't be empty)
                 - years_of_experience (figure out from description, make a best guess, can't be empty. make sure this is an integer, so no values like 40+, only 40)
                 - capacity (string of comma separated values. options are 'Part-time Contractor', 'Full-time Contractor', 'Part-time Employee' and 'Full-time Employee', can't be empty)
@@ -90,14 +88,12 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
 
             cleaned_data = clean_profile_json_object(json_profile, json_converted_comment_response)
 
-            technology_names = [name.strip() for name in cleaned_data['technologies_used'].split(',')]
+            technology_names = [name.strip() for name in cleaned_data['tech_stack'].split(',')]
 
             technologies = []
             for name in technology_names:
                 if name != "":
-                    obj, created = Technology.objects.get_or_create(name=name)
-                    if created:
-                      logger.info(f"{obj} was created")
+                    obj, _ = Technology.objects.get_or_create(name=name)
                     technologies.append(obj)
 
             profile = Profile(
@@ -122,10 +118,7 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
                 capacity=cleaned_data['capacity'],
             )
             profile.save()
-
-            logger.info(f"Saving {technologies} for {profile}")
-            profile.technologies_used.add(*technologies)
-
+            profile.tech_stack.add(*technologies)
 
             logger.info(f"{profile} profile was created.")
         else:
