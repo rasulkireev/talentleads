@@ -1,23 +1,34 @@
-from django.db.models import Q, Count
-from django_filters import FilterSet, AllValuesMultipleFilter, ModelMultipleChoiceFilter, CharFilter, NumberFilter, MultipleChoiceFilter
 from django import forms
+from django.db.models import Count, Q
+from django_filters import (
+    AllValuesMultipleFilter,
+    CharFilter,
+    FilterSet,
+    ModelMultipleChoiceFilter,
+    MultipleChoiceFilter,
+    NumberFilter,
+)
 
 from .models import Profile, Technology
 
+
 class FrequencyOrderedAllValuesMultipleFilter(AllValuesMultipleFilter):
     def field_choices(self, *args, **kwargs):
-        queryset = self.model._default_manager.distinct().order_by(self.field_name).values_list(self.field_name, flat=True)
+        queryset = (
+            self.model._default_manager.distinct().order_by(self.field_name).values_list(self.field_name, flat=True)
+        )
         lst = list(queryset)
         # Count the frequency of each value and sort the choices by frequency in descending order
         choices = sorted(
-            self.extra['choices_form_class'](list(enumerate(lst))),
-            key=lambda x: -lst.count(x[0])
+            self.extra["choices_form_class"](list(enumerate(lst))),
+            key=lambda x: -lst.count(x[0]),
         )
         return choices
 
+
 class ProfileFilter(FilterSet):
-    title = CharFilter(lookup_expr='icontains')
-    description = CharFilter(lookup_expr='icontains')
+    title = CharFilter(lookup_expr="icontains")
+    description = CharFilter(lookup_expr="icontains")
 
     # location = CharFilter(lookup_expr='icontains')
     city = AllValuesMultipleFilter(widget=forms.CheckboxSelectMultiple)
@@ -26,15 +37,17 @@ class ProfileFilter(FilterSet):
 
     level = AllValuesMultipleFilter(widget=forms.CheckboxSelectMultiple)
     tech_stack = ModelMultipleChoiceFilter(
-        queryset=Technology.objects.annotate(profile_count=Count('profiles')).filter(profile_count__gt=10).order_by('-profile_count'),
+        queryset=Technology.objects.annotate(profile_count=Count("profiles"))
+        .filter(profile_count__gt=10)
+        .order_by("-profile_count"),
         widget=forms.CheckboxSelectMultiple(),
-        conjoined=True
+        conjoined=True,
     )
     who_wants_to_be_hired_title = AllValuesMultipleFilter(widget=forms.CheckboxSelectMultiple)
 
     years_of_experience = NumberFilter()
-    years_of_experience__gt = NumberFilter(field_name='years_of_experience', lookup_expr='gt')
-    years_of_experience__lt = NumberFilter(field_name='years_of_experience', lookup_expr='lt')
+    years_of_experience__gt = NumberFilter(field_name="years_of_experience", lookup_expr="gt")
+    years_of_experience__lt = NumberFilter(field_name="years_of_experience", lookup_expr="lt")
 
     city = AllValuesMultipleFilter(widget=forms.CheckboxSelectMultiple)
     country = AllValuesMultipleFilter(widget=forms.CheckboxSelectMultiple)
@@ -46,22 +59,26 @@ class ProfileFilter(FilterSet):
         ("Part-time Employee", "Part-time Employee"),
         ("Full-time Employee", "Full-time Employee"),
     ]
-    capacity = MultipleChoiceFilter(choices=CAPACITY_CHOICES, widget=forms.CheckboxSelectMultiple, lookup_expr="icontains")
+    capacity = MultipleChoiceFilter(
+        choices=CAPACITY_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        lookup_expr="icontains",
+    )
 
     class Meta:
         model = Profile
         fields = [
-          "title",
-          "description",
-          "level",
-          "is_remote",
-          "willing_to_relocate",
-          "years_of_experience",
-          # "tech_stack",
-          "who_wants_to_be_hired_title",
-          "location",
-          "city",
-          "state",
-          "country",
-          "capacity"
+            "title",
+            "description",
+            "level",
+            "is_remote",
+            "willing_to_relocate",
+            "years_of_experience",
+            # "tech_stack",
+            "who_wants_to_be_hired_title",
+            "location",
+            "city",
+            "state",
+            "country",
+            "capacity",
         ]

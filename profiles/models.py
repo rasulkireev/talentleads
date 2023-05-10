@@ -1,8 +1,10 @@
 import uuid
+
 from autoslug import AutoSlugField
 from django.db import models
 from django.urls import reverse
 from model_utils.models import TimeStampedModel
+
 
 class Profile(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -40,6 +42,7 @@ class Profile(TimeStampedModel):
     def get_absolute_url(self):
         return reverse("profile", kwargs={"pk": self.id})
 
+
 class Technology(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=256)
@@ -47,6 +50,7 @@ class Technology(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
 
 class ProfileTechnology(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

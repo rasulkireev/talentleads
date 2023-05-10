@@ -1,10 +1,13 @@
 import logging
+
 from django.views.generic import TemplateView
 
+from hackernews_developers.utils import floor_to_thousands
 from profiles.models import Profile
-from hackernews_developers.utils import floor_to_thousands, add_users_context
+from utils.views import add_users_context
 
 logger = logging.getLogger(__file__)
+
 
 class HomeView(TemplateView):
     template_name = "pages/home.html"
@@ -13,11 +16,13 @@ class HomeView(TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
 
-        context["profiles"] = Profile.objects.exclude(description__isnull=True).exclude(description__exact='').order_by("-created")[:8]
+        context["profiles"] = (
+            Profile.objects.exclude(description__isnull=True).exclude(description__exact="").order_by("-created")[:8]
+        )
         context["num_of_profiles"] = floor_to_thousands(len(Profile.objects.all()))
 
         if user.is_authenticated:
-          add_users_context(context, user)
+            add_users_context(context, user)
 
         return context
 
@@ -30,6 +35,6 @@ class PricingView(TemplateView):
         user = self.request.user
 
         if user.is_authenticated:
-          add_users_context(context, user)
+            add_users_context(context, user)
 
         return context

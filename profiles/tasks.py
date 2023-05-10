@@ -1,11 +1,12 @@
-import re
 import json
-import httpx
 import logging
+import re
+
+import httpx
+import openai
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django_q.models import Schedule
-import openai
 
 from .models import Profile, Technology
 from .utils import clean_profile_json_object
@@ -13,11 +14,12 @@ from .utils import clean_profile_json_object
 logger = logging.getLogger(__file__)
 openai.api_key = settings.OPENAI_KEY
 
-def analyze_hn_page(who_wants_to_be_hired_post_id):
-    r = httpx.get(f'https://hacker-news.firebaseio.com/v0/item/{who_wants_to_be_hired_post_id}.json').json()
 
-    who_wants_to_be_hired_id = int(r['id'])
-    who_wants_to_be_hired_title = str(re.search('\(([^)]+)', r['title']).group(1))
+def analyze_hn_page(who_wants_to_be_hired_post_id):
+    r = httpx.get(f"https://hacker-news.firebaseio.com/v0/item/{who_wants_to_be_hired_post_id}.json").json()
+
+    who_wants_to_be_hired_id = int(r["id"])
+    who_wants_to_be_hired_title = str(re.search("\(([^)]+)", r["title"]).group(1))
 
     list_of_comment_ids = r["kids"]
 
@@ -28,22 +30,19 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
     for comment_id in list_of_comment_ids:
         if not Profile.objects.filter(who_wants_to_be_hired_comment_id=comment_id).exists():
             logger.info(f"Analyzing comment {comment_id}")
-            json_profile = httpx.get(f'https://hacker-news.firebaseio.com/v0/item/{comment_id}.json').json()
+            json_profile = httpx.get(f"https://hacker-news.firebaseio.com/v0/item/{comment_id}.json").json()
 
             try:
-              if json_profile["deleted"] == True:
-                  continue
+                if json_profile["deleted"] == True:
+                    continue
             except KeyError:
-                  pass
+                pass
 
-            who_wants_to_be_hired_comment_id = int(json_profile['id'])
-            hn_username = str(json_profile['by'])
+            who_wants_to_be_hired_comment_id = int(json_profile["id"])
+            hn_username = str(json_profile["by"])
 
             logger.info(f"JSON for comment {comment_id}: {json_profile}")
-            request = f"""Convert the following text:
-                ```
-                {json_profile['text']}
-                ```
+            request = f"""Convert the text below into json object with the following keys:
                 into a JSON object with the following valid keys
                 (feel free to give me an value of empty string if there is no info,
                 also ignore the content in  brackets, it is only to explain what I need):
@@ -65,38 +64,42 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
                 - capacity (string of comma separated values. options are 'Part-time Contractor', 'Full-time Contractor', 'Part-time Employee' and 'Full-time Employee', can't be empty)
 
                 Don't add any text and only respond with a JSON Object.
+
+                Text: '''
+                {json_profile['text']}
+                '''
             """
 
             max_attempts = 3
             attempts = 0
             while attempts < max_attempts:
                 try:
-                  completion = openai.ChatCompletion.create(
-                    model="gpt-3.5-turbo",
-                    messages=[
-                      {"role": "system", "content": "You are a helpful assistant."},
-                      {
-                          "role": "user",
-                          "content": request
-                      }
-                    ]
-                  )
+                    completion = openai.ChatCompletion.create(
+                        model="gpt-3.5-turbo",
+                        temperature=0,
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": "You are a helpful assistant.",
+                            },
+                            {"role": "user", "content": request},
+                        ],
+                    )
                 except openai.error.RateLimitError:
-                  attempts += 1
-                  if attempts == max_attempts:
-                      continue
+                    attempts += 1
+                    if attempts == max_attempts:
+                        continue
 
             converted_comment_response = completion.choices[0].message
 
             try:
-              json_converted_comment_response = json.loads(converted_comment_response.content)
+                json_converted_comment_response = json.loads(converted_comment_response.content)
             except json.decoder.JSONDecodeError:
-              continue
-
+                continue
 
             cleaned_data = clean_profile_json_object(json_profile, json_converted_comment_response)
 
-            technology_names = [name.strip() for name in cleaned_data['technologies_used'].split(',')]
+            technology_names = [name.strip() for name in cleaned_data["technologies_used"].split(",")]
             technologies = []
             for name in technology_names:
                 if name != "":
@@ -107,29 +110,29 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
                 latest_who_wants_to_be_hired_id=who_wants_to_be_hired_id,
                 who_wants_to_be_hired_title=who_wants_to_be_hired_title,
                 who_wants_to_be_hired_comment_id=who_wants_to_be_hired_comment_id,
-                title=cleaned_data['title'],
-                name=cleaned_data['name'],
+                title=cleaned_data["title"],
+                name=cleaned_data["name"],
                 hn_username=hn_username,
-                description=cleaned_data['description'],
-                location=cleaned_data['location'],
-                city=cleaned_data['city'],
-                country=cleaned_data['country'],
-                state=cleaned_data['state'],
-                level=cleaned_data['level'],
-                is_remote=cleaned_data['is_remote'],
-                willing_to_relocate=cleaned_data['willing_to_relocate'],
-                resume_link=cleaned_data['resume_link'],
-                personal_website=cleaned_data['personal_website'],
-                email=cleaned_data['email'],
-                years_of_experience=cleaned_data['years_of_experience'],
-                capacity=cleaned_data['capacity'],
+                description=cleaned_data["description"],
+                location=cleaned_data["location"],
+                city=cleaned_data["city"],
+                country=cleaned_data["country"],
+                state=cleaned_data["state"],
+                level=cleaned_data["level"],
+                is_remote=cleaned_data["is_remote"],
+                willing_to_relocate=cleaned_data["willing_to_relocate"],
+                resume_link=cleaned_data["resume_link"],
+                personal_website=cleaned_data["personal_website"],
+                email=cleaned_data["email"],
+                years_of_experience=cleaned_data["years_of_experience"],
+                capacity=cleaned_data["capacity"],
             )
             profile.save()
             profile.tech_stack.add(*technologies)
 
             logger.info(f"{profile} profile was created.")
         else:
-          logger.info(f"Profile for {comment_id} already exists.")
+            logger.info(f"Profile for {comment_id} already exists.")
 
     return f"Task Completed"
 
@@ -142,15 +145,16 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
 #     cron = '0 0 * * *'
 # )
 
+
 def send_outreach_email_task(subject_line, message, receiver, user, send_to_list):
-    cc_s = [email.strip() for email in send_to_list.split(',') if send_to_list] + [user.email]
+    cc_s = [email.strip() for email in send_to_list.split(",") if send_to_list] + [user.email]
     logger.info(f"Sending email to {receiver} with cc {cc_s}")
     email = EmailMessage(
-        subject = subject_line,
-        body = message,
-        from_email = "rasul@hnprofiles.com",
-        to = [receiver],
+        subject=subject_line,
+        body=message,
+        from_email="rasul@hnprofiles.com",
+        to=[receiver],
         reply_to=[user.email],
-        cc = cc_s,
+        cc=cc_s,
     )
     email.send(fail_silently=True)

@@ -1,24 +1,25 @@
 import logging
 
-from django.views.generic import DetailView, FormView
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django import forms
-from django.urls import reverse_lazy, reverse
-from django_q.tasks import async_task, result
-from django_filters.views import FilterView
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.paginator import Paginator
 from django.shortcuts import redirect
-from django_q.tasks import async_task
-from django.contrib import messages
+from django.urls import reverse, reverse_lazy
+from django.views.generic import DetailView, FormView
+from django_filters.views import FilterView
+from django_q.tasks import async_task, result
 
+from hackernews_developers.utils import floor_to_tens
+from users.models import Outreach, OutreachTemplate
+from utils.views import add_users_context
+
+from .filters import ProfileFilter
 from .models import Profile
 from .tasks import analyze_hn_page, send_outreach_email_task
-from .filters import ProfileFilter
-
-from hackernews_developers.utils import floor_to_tens, add_users_context
-from users.models import OutreachTemplate, Outreach
 
 logger = logging.getLogger(__file__)
+
 
 class ProfileListView(FilterView):
     model = Profile
@@ -36,6 +37,7 @@ class ProfileListView(FilterView):
             add_users_context(context, user)
 
         return context
+
 
 class ProfileDetailView(DetailView):
     model = Profile
@@ -58,6 +60,7 @@ class ProfileDetailView(DetailView):
 class GenericForm(forms.Form):
     who_wants_to_be_hired_post_id = forms.CharField()
 
+
 class TriggerAsyncTask(LoginRequiredMixin, UserPassesTestMixin, FormView):
     login_url = "account_login"
     success_url = reverse_lazy("home")
@@ -68,9 +71,10 @@ class TriggerAsyncTask(LoginRequiredMixin, UserPassesTestMixin, FormView):
         return self.request.user.is_staff
 
     def form_valid(self, form):
-        who_wants_to_be_hired_post_id = form.cleaned_data.get('who_wants_to_be_hired_post_id')
-        async_task(analyze_hn_page, who_wants_to_be_hired_post_id, hook='hooks.print_result')
+        who_wants_to_be_hired_post_id = form.cleaned_data.get("who_wants_to_be_hired_post_id")
+        async_task(analyze_hn_page, who_wants_to_be_hired_post_id, hook="hooks.print_result")
         return super(TriggerAsyncTask, self).form_valid(form)
+
 
 def send_outreach_email(request, profile_id, email_template_id):
     logger.info(f"profile_id: {profile_id}")
@@ -80,25 +84,21 @@ def send_outreach_email(request, profile_id, email_template_id):
     profile = Profile.objects.get(id=profile_id)
     template = OutreachTemplate.objects.get(id=email_template_id)
 
-    obj, created = Outreach.objects.get_or_create(
-      author=user,
-      receiver=profile,
-      template=template
-    )
+    obj, created = Outreach.objects.get_or_create(author=user, receiver=profile, template=template)
     logger.info(f"obj, created: {obj}, {created}")
 
     if created:
-      async_task(
-        send_outreach_email_task,
-        template.subject_line,
-        template.text,
-        profile.email,
-        user,
-        template.cc_s,
-        hook='hooks.email_sent'
-      )
-      messages.add_message(request, messages.INFO, "Email Sent. Check your email, you were CC'd.")
+        async_task(
+            send_outreach_email_task,
+            template.subject_line,
+            template.text,
+            profile.email,
+            user,
+            template.cc_s,
+            hook="hooks.email_sent",
+        )
+        messages.add_message(request, messages.INFO, "Email Sent. Check your email, you were CC'd.")
     else:
-      messages.add_message(request, messages.WARNING, "You have already sent the email.")
+        messages.add_message(request, messages.WARNING, "You have already sent the email.")
 
     return redirect(reverse("profile", kwargs={"pk": profile_id}))

@@ -1,7 +1,8 @@
 import uuid
+
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.conf import settings
 from django.urls import reverse
 from model_utils.models import TimeStampedModel
 
@@ -16,7 +17,11 @@ class CustomUser(AbstractUser):
 class OutreachTemplate(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="outreach_template")
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="outreach_template",
+    )
     title = models.CharField(max_length=256)
     subject_line = models.CharField(max_length=256)
     text = models.TextField(blank=True)
@@ -25,9 +30,10 @@ class OutreachTemplate(TimeStampedModel):
     def __str__(self):
         return self.title
 
+
 class Outreach(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="outreach")
-    receiver = models.ForeignKey('profiles.profile', on_delete=models.CASCADE, related_name="outreach")
-    template = models.ForeignKey('OutreachTemplate', on_delete=models.CASCADE, related_name="outreach")
+    receiver = models.ForeignKey("profiles.profile", on_delete=models.CASCADE, related_name="outreach")
+    template = models.ForeignKey("OutreachTemplate", on_delete=models.CASCADE, related_name="outreach")
