@@ -6,10 +6,12 @@ import httpx
 import openai
 from django.conf import settings
 from django.core.mail import EmailMessage
-from django_q.models import Schedule
 
 from .models import Profile, Technology
 from .utils import clean_profile_json_object
+
+# from django_q.models import Schedule
+
 
 logger = logging.getLogger(__file__)
 openai.api_key = settings.OPENAI_KEY
@@ -33,7 +35,7 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
             json_profile = httpx.get(f"https://hacker-news.firebaseio.com/v0/item/{comment_id}.json").json()
 
             try:
-                if json_profile["deleted"] == True:
+                if json_profile["deleted"] is True:
                     continue
             except KeyError:
                 pass
@@ -68,10 +70,11 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
                 Text: '''
                 {json_profile['text']}
                 '''
-            """
+            """  # noqa: E501
 
             max_attempts = 3
             attempts = 0
+            converted_comment_response = None
             while attempts < max_attempts:
                 try:
                     completion = openai.ChatCompletion.create(
@@ -85,12 +88,11 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
                             {"role": "user", "content": request},
                         ],
                     )
+                    converted_comment_response = completion.choices[0].message
                 except openai.error.RateLimitError:
                     attempts += 1
                     if attempts == max_attempts:
                         continue
-
-            converted_comment_response = completion.choices[0].message
 
             try:
                 json_converted_comment_response = json.loads(converted_comment_response.content)
@@ -134,7 +136,7 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
         else:
             logger.info(f"Profile for {comment_id} already exists.")
 
-    return f"Task Completed"
+    return "Task Completed"
 
 
 # Schedule.objects.create(

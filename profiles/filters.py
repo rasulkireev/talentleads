@@ -1,5 +1,5 @@
 from django import forms
-from django.db.models import Count, Q
+from django.db.models import Count
 from django_filters import (
     AllValuesMultipleFilter,
     CharFilter,
@@ -74,7 +74,7 @@ class ProfileFilter(FilterSet):
             "is_remote",
             "willing_to_relocate",
             "years_of_experience",
-            # "tech_stack",
+            "tech_stack",
             "who_wants_to_be_hired_title",
             "location",
             "city",
