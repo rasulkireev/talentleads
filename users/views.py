@@ -1,29 +1,26 @@
 import logging
-import stripe
 
-from django.urls import reverse_lazy
-from django.shortcuts import redirect
-from django.http import HttpResponse, HttpResponseRedirect
+import stripe
+from allauth.account.utils import send_email_confirmation
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.views.generic import UpdateView, FormView, CreateView, UpdateView, DeleteView
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from django.contrib import messages
+from django.views.generic import CreateView, DeleteView, FormView, UpdateView
 from django_q.tasks import async_task
+from djstripe import models, settings as djstripe_settings, webhooks
 
-from .forms import SupportForm, CreateOutreachTemplateForm, UpdateOutreachTemplateForm
+from utils.views import add_users_context
+
+from .forms import CreateOutreachTemplateForm, SupportForm, UpdateOutreachTemplateForm
+from .models import CustomUser, OutreachTemplate
 from .tasks import email_support_request
-from .models import OutreachTemplate
-
-
-from djstripe import models, webhooks, settings as djstripe_settings
-from allauth.account.utils import send_email_confirmation
-
-from .models import CustomUser
-from hackernews_developers.utils import add_users_context
 
 stripe.api_key = djstripe_settings.djstripe_settings.STRIPE_SECRET_KEY
 logger = logging.getLogger(__file__)
+
 
 class UserSettingsView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     login_url = "account_login"
@@ -43,6 +40,7 @@ class UserSettingsView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
         add_users_context(context, user)
 
         return context
+
 
 def create_checkout_session(request):
     user = request.user
@@ -72,6 +70,7 @@ def create_checkout_session(request):
 
     return redirect(checkout_session.url, code=303)
 
+
 @webhooks.handler("checkout.session.completed")
 def successfull_payment_webhook(event, **kwargs):
     if event.type == "checkout.session.completed":
@@ -91,11 +90,13 @@ def create_customer_portal_session(request):
 
     return redirect(session.url)
 
+
 def resend_email_confirmation_email(request):
     user = request.user
     send_email_confirmation(request, user, user.email)
 
     return redirect("settings")
+
 
 class SupportView(LoginRequiredMixin, SuccessMessageMixin, FormView):
     login_url = "account_login"
@@ -103,27 +104,31 @@ class SupportView(LoginRequiredMixin, SuccessMessageMixin, FormView):
     form_class = SupportForm
 
     def get_success_url(self):
-        messages.add_message(self.request, messages.INFO, "Thanks for sending your feedback. I'll get back to you ASAP.")
+        messages.add_message(
+            self.request,
+            messages.INFO,
+            "Thanks for sending your feedback. I'll get back to you ASAP.",
+        )
         return reverse_lazy("support")
-
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         user = self.request.user
         if user.is_authenticated:
-          add_users_context(context, user)
+            add_users_context(context, user)
 
         return context
 
     def form_valid(self, form):
-        async_task(email_support_request, form.cleaned_data, hook='hooks.email_sent')
+        async_task(email_support_request, form.cleaned_data, hook="hooks.email_sent")
         return super(SupportView, self).form_valid(form)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['current_user'] = self.request.user
+        kwargs["current_user"] = self.request.user
         return kwargs
+
 
 class TemplateCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     login_url = "account_login"
@@ -142,7 +147,7 @@ class TemplateCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         context["update_form"] = UpdateOutreachTemplateForm
 
         if user.is_authenticated:
-          add_users_context(context, user)
+            add_users_context(context, user)
 
         return context
 
@@ -151,6 +156,7 @@ class TemplateCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         self.object = form.save()
 
         return super(TemplateCreateView, self).form_valid(form)
+
 
 class TemplateUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     login_url = "account_login"
