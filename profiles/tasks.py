@@ -45,10 +45,7 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
 
             logger.info(f"JSON for comment {comment_id}: {json_profile}")
 
-            request = f"""Convert the text below into json object with the following keys:
-                into a JSON object with the following valid keys
-                (feel free to give me an value of empty string if there is no info,
-                also ignore the content in  brackets, it is only to explain what I need):
+            request = f"""Convert the text below into json object with the following valid keys (give me an empty string if there is no info, ignore the content in  brackets, it is only to explain what I need):
                 - location (can't be empty)
                 - city (figure out from location, can't be empty)
                 - country (figure out from location, can't be empty)
@@ -73,27 +70,23 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
                 '''
             """  # noqa: E501
 
-            max_attempts = 3
-            attempts = 0
-            converted_comment_response = None
-            while attempts < max_attempts:
-                try:
-                    completion = openai.ChatCompletion.create(
-                        model="gpt-3.5-turbo",
-                        temperature=0,
-                        messages=[
-                            {
-                                "role": "system",
-                                "content": "You are a helpful assistant.",
-                            },
-                            {"role": "user", "content": request},
-                        ],
-                    )
-                    converted_comment_response = completion.choices[0].message
-                except openai.error.RateLimitError:
-                    attempts += 1
-                    if attempts == max_attempts:
-                        continue
+            try:
+                completion = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
+                    temperature=0,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are a helpful assistant.",
+                        },
+                        {"role": "user", "content": request},
+                    ],
+                )
+                logger.info(f"Got Completion for {comment_id}")
+                converted_comment_response = completion.choices[0].message
+            except (openai.error.RateLimitError, openai.error.APIError) as e:
+                logger.error(e)
+                continue
 
             try:
                 json_converted_comment_response = json.loads(converted_comment_response.content)
