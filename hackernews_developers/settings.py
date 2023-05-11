@@ -208,8 +208,8 @@ LOGGING = {
 Q_CLUSTER = {
     "name": "hackernews_developers-q",
     "orm": "default",
-    # "timeout": 90,
-    # "retry": 120,
+    "timeout": 90,
+    "retry": 120,
     "workers": 4,
     "max_attempts": 2,
 }
