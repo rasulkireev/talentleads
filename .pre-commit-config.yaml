@@ -24,11 +24,6 @@ repos:
     - id: isort
       name: isort (python)
 
-- repo: https://github.com/pycqa/flake8
-  rev: 6.0.0
-  hooks:
-    - id: flake8
-
 - repo: https://github.com/Riverside-Healthcare/djLint
   rev: v1.19.16
   hooks:
@@ -44,18 +39,18 @@ repos:
         "--without-hashes"
       ]
 
-- repo: local
-  hooks:
-    - id: pylint
-      name: pylint
-      entry: poetry run pylint
-      language: system
-      types: [python]
-      args:
-        [
-          "-rn",
-          "-sn",
-          "--load-plugins=pylint_django",
-          "--django-settings-module=hackernews_developers.settings",
-          --ignore=manage.py,
-        ]
+# - repo: local
+#   hooks:
+#     - id: pylint
+#       name: pylint
+#       entry: poetry run pylint
+#       language: system
+#       types: [python]
+#       args:
+#         [
+#           "-rn",
+#           "-sn",
+#           "--load-plugins=pylint_django",
+#           "--django-settings-module=hackernews_developers.settings",
+#           --ignore=manage.py,
+#         ]

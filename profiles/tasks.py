@@ -44,6 +44,7 @@ def analyze_hn_page(who_wants_to_be_hired_post_id):
             hn_username = str(json_profile["by"])
 
             logger.info(f"JSON for comment {comment_id}: {json_profile}")
+
             request = f"""Convert the text below into json object with the following keys:
                 into a JSON object with the following valid keys
                 (feel free to give me an value of empty string if there is no info,

@@ -1,6 +1,8 @@
 # Other
 emails/
 # notebooks/
+.kolo/
+.ruff_cache/
 
 # DB
 backup-dbs/
