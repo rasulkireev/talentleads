@@ -227,8 +227,8 @@ ANYMAIL = {
     "MAILGUN_API_KEY": env("MAILGUN_API_KEY"),
     "MAILGUN_SENDER_DOMAIN": "mg.hnprofiles.com",
 }
-DEFAULT_FROM_EMAIL = "rasul@hnprofiles.com"
-SERVER_EMAIL = "error@hnprofiles.com"
+DEFAULT_FROM_EMAIL = "rasul@hnprofiles.email"
+SERVER_EMAIL = "error@hnprofiles.email"
 
 if DEBUG:
     EMAIL_HOST = "localhost"
@@ -236,3 +236,6 @@ if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 else:
     EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
+
+HNJOBS_API_TOKEN = env("HNJOBS_API_TOKEN")
+HNJOBS_HOST = env("HNJOBS_HOST")
