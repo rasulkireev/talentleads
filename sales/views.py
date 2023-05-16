@@ -27,4 +27,4 @@ def get_emails(request):
 
         messages.success(request, f"{emails_sent} email sent.")
 
-        return redirect("home")
+        return redirect("trigger_task")
