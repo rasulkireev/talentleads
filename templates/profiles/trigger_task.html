@@ -1,10 +1,23 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+
+{% block meta %}
+    <title>Admin Panel</title>
+    <meta name="description" content="{{ object.description }}"/>
+    <link rel="canonical" href="https://{{ request.get_host }}/profile/{{ object.id }}" />
+{% endblock meta %}
 
 {% block content %}
-<form method="POST" action="">
+
+<form method="post" action="">
   {% csrf_token %}
   {{ form }}
   <button type="submit">Trigger Task</button>
 </form>
+
+<div>
+  <a href="{% url 'get-emails' %}" class="px-5 py-3 text-lg font-semibold text-white bg-blue-600 rounded-md shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+    Send Marketing Emails
+  </a>
+</div>
 
 {% endblock content %}
