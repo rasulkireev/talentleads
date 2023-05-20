@@ -14,6 +14,8 @@ import os
 from pathlib import Path
 
 import environ
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
@@ -275,3 +277,11 @@ HNJOBS_HOST = env("HNJOBS_HOST")
 WAGTAIL_SITE_NAME = "HN Profiles"
 WAGTAILADMIN_BASE_URL = "https://hnprofile.com"
 TAGGIT_CASE_INSENSITIVE = True
+
+# Sentry
+sentry_sdk.init(
+    dsn="https://e78cf2635ec44401b92d6b32531f7a20@o264232.ingest.sentry.io/4505216462749696",
+    integrations=[
+        DjangoIntegration(),
+    ],
+)
