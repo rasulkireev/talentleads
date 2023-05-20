@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block meta %}
+    <title>{{ page.title }}</title>
+    <link rel="canonical" href="https://{{ request.get_host }}/blog/{{ page.slug }}" />
+    <meta name="description" content="{{ page.intro }}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="@rasulkireev" />
+    {% comment %} <meta name="twitter:site" content="@builtwithdjango" /> {% endcomment %}
+    <meta name="twitter:title" content="{{ page.title }}" />
+    <meta name="twitter:description" content="{{ page.intro }}" />
+    <meta name="twitter:image" content="https://ogi.sh/article?title={{ page.title }}&eyebrow={{ page.date_created }}&subtitle={{ page.intro }}" />
+    <meta property="og:title" content="{{ page.title }}" />
+    <meta property="og:url" content="https://{{ request.get_host }}/blog/{{ page.slug }}" />
+    <meta property="og:description" content="{{ page.intro }}" />
+    <meta property="og:image" content="https://ogi.sh/article?title={{ page.title }}&eyebrow={{ page.date_created }}&subtitle={{ page.intro }}" />
+{% endblock meta %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <div class="mt-10 ">
+    <h1 class="text-6xl font-semibold text-center">{{ page.title }}</h1>
+  </div>
+
+  <div class="flex flex-row items-center justify-center mt-10 space-x-2" id="author">
+    <img src="{{ gravatar_url }}" width=8 height=8 class="w-8 h-8 rounded-full" alt="{{ page.owner.username }}" />
+    <p class="text-lg">{{ page.owner.first_name }} {{ page.owner.last_name }}</p>
+  </div>
+
+  <div class="mt-10">
+    <aticle class="prose lg:prose-lg">
+      {{ page.body|richtext }}
+    </aticle>
+  </div>
+</div>
+{% endblock content %}
+
+{% block schema %}
+  {% image page.icon original as icon %}
+  <script type="application/ld+json">
+    {
+      "@context": "http://schema.org/",
+      "@type": "BlogPosting",
+      "author": {
+        "@type": "Person",
+        "name": "{{ page.first_name}} {{ page.last_name }}",
+        "image": "{{ gravatar_url }}"
+      },
+      "headline": "{{ page.title }}",
+      "abstract": "{{ page.intro }}",
+      "articleBody": "{% autoescape on %}{{ page.body }}{% endautoescape %}",
+      "image": "https://ogi.sh/article?title={{ page.title }}&eyebrow={{ page.date_created }}&subtitle={{ page.intro }}",
+      "thumbnailUrl": "https://ogi.sh/article?title={{ page.title }}&eyebrow={{ page.date_created }}&subtitle={{ page.intro }}",
+      "dateCreated": "{{ page.date_created }}",
+      "datePublished": "{{ page.date_created }}",
+      "dateModified": "{{ page.date_modified }}",
+    }
+  </script>
+{% endblock schema %}

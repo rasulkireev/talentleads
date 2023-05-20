@@ -17,16 +17,22 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from wagtail import urls as wagtail_urls
+from wagtail.admin import urls as wagtailadmin_urls
+from wagtail.documents import urls as wagtaildocs_urls
 
 urlpatterns = (
     [
-        path("admin/", admin.site.urls),
+        path("super/", admin.site.urls),
         path("users/", include("allauth.urls")),
         path("users/", include("users.urls")),
         path("", include("pages.urls")),
         path("profiles/", include("profiles.urls")),
         path("sales/", include("sales.urls")),
         path("stripe/", include("djstripe.urls", namespace="djstripe")),
+        path("wagtail-admin/", include(wagtailadmin_urls)),
+        path("wagtail-documents/", include(wagtaildocs_urls)),
+        path("blog/", include(wagtail_urls)),
     ]
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
