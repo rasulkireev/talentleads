@@ -31,6 +31,8 @@ wagtail = "^5.0"
 django-taggit = "^3.1.0"
 django-modelcluster = "^6.0"
 libgravatar = "^1.0.4"
+django-storages = "^1.13.2"
+boto3 = "^1.26.137"
 
 [tool.poetry.dev-dependencies]
 
