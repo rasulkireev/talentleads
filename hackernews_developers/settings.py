@@ -280,7 +280,7 @@ TAGGIT_CASE_INSENSITIVE = True
 
 # Sentry
 sentry_sdk.init(
-    dsn="https://e78cf2635ec44401b92d6b32531f7a20@o264232.ingest.sentry.io/4505216462749696",
+    dsn=env("SENTRY_DSN"),
     integrations=[
         DjangoIntegration(),
     ],
