@@ -8,31 +8,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <!-- Other meta stuff -->
-  <link rel="apple-touch-icon" href="{% static 'vendors/favicon/logo.png' %}" />
-  <link rel="apple-touch-icon" href="{% static 'vendors/favicon/logo.png' %}" />
-  <link rel="icon" type="image/png" sizes="16x16 32x32 500x500" href="{% static 'vendors/favicon/logo.png' %}"/>
+  <link rel="apple-touch-icon" href="{% static 'vendors/favicon/logo-2.png' %}" />
+  <link rel="apple-touch-icon" href="{% static 'vendors/favicon/logo-2.png' %}" />
+  <link rel="icon" type="image/png" sizes="16x16 32x32 500x500" href="{% static 'vendors/favicon/logo-2.png' %}"/>
 
   {% block meta %}
-  <title>HN Profiles</title>
+  <title>TalentLeads</title>
   <meta name="description" content="Searchable Database of HN users **Who Want to be Hired**."/>
   <link rel="canonical" href="https://{{ request.get_host }}/" />
       <meta property="og:type" content="website" />
-      <meta property="og:title" content="HN Profiles" />
+      <meta property="og:title" content="TalentLeads" />
       <meta property="og:url" content="https://{{ request.get_host }}/" />
       <meta property="og:description" content="Searchable Database of HN users **Who Want to be Hired**."/>
-      <meta property="og:image" content="https://{{ request.get_host }}{% static 'vendors/images/logo.png' %}" />
+      <meta property="og:image" content="https://{{ request.get_host }}{% static 'vendors/images/logo-2.png' %}" />
       <meta name="twitter:card" content="summary" />
       <meta name="twitter:creator" content="@rasulkireev" />
       <meta name="twitter:site" content="@rasulkireev" />
-      <meta name="twitter:title" content="HN Profiles" />
+      <meta name="twitter:title" content="TalentLeads" />
       <meta name="twitter:description" content="Searchable Database of HN users **Who Want to be Hired**."/>
-      <meta name="twitter:image" content="https://{{ request.get_host }}{% static 'vendors/images/logo.png' %}" />
+      <meta name="twitter:image" content="https://{{ request.get_host }}{% static 'vendors/images/logo-2.png' %}" />
   {% endblock meta %}
 
   {% stylesheet_pack 'index' %}
   {% javascript_pack 'index' attrs='defer' %}
 
-  <script defer data-domain="hnprofiles.com" src="https://plausible.rasulkireev.com/js/script.js"></script>
+  <script defer data-domain="gettalentleads.com" src="https://plausible.com/js/script.js"></script>
+
 
 
 </head>
@@ -45,14 +46,10 @@
     <header class="bg-white">
       <nav class="flex items-center justify-between p-6 mx-auto max-w-7xl lg:px-8" aria-label="Global">
         <div class="flex items-center gap-x-12">
-          <a href="{% url 'home' %}" class="-m-1.5 p-1.5">
-            <span class="sr-only">HN Profiles</span>
-            <img class="w-auto h-8" src="{% static 'vendors/images/logo.png' %}" alt="HN Profiles Logo">
+          <a href="{% url 'home' %}" class="-m-1.5 p-1.5 flex flex-row space-x-2 items-center justify-between">
+            <img class="w-auto h-8 mb-1" src="{% static 'vendors/images/logo-2.png' %}" alt="TalentLeads Logo"/>
+            <span class="text-base font-semibold text-gray-700">TalentLeads</span>
           </a>
-          <div class="hidden lg:flex lg:gap-x-12">
-            <a href="{% url 'profiles' %}" class="text-base font-semibold leading-6 text-gray-900">Profiles</a>
-            <a href="{% url 'pricing' %}" class="text-base font-semibold leading-6 text-gray-900">Pricing</a>
-          </div>
         </div>
         <div class="flex lg:hidden">
           <button data-action="dropdown#toggle click@window->dropdown#hide" type="button" class="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700">
@@ -62,7 +59,12 @@
             </svg>
           </button>
         </div>
-        <div class="hidden lg:flex">
+        <div class="hidden lg:flex lg:gap-x-12">
+
+          <div class="hidden lg:flex lg:gap-x-12">
+            <a href="{% url 'pricing' %}" class="text-base leading-6 text-gray-900">Pricing</a>
+          </div>
+
           {% if user.is_authenticated %}
           <!-- Profile dropdown -->
           <div data-controller="dropdown" class="relative ml-3">
@@ -107,8 +109,6 @@
               Log in <span aria-hidden="true">&rarr;</span>
             </a>
           {% endif %}
-
-
         </div>
       </nav>
 
@@ -122,8 +122,8 @@
         <div class="fixed inset-y-0 right-0 z-10 w-full px-6 py-6 overflow-y-auto bg-white sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
           <div class="flex items-center justify-between">
             <a href="{% url 'home' %}" class="-m-1.5 p-1.5">
-              <span class="sr-only">HN Profiles</span>
-              <img class="w-auto h-8" src="{% static 'vendors/images/logo.png' %}" alt="HN Profiles Logo">
+              <span class="sr-only">TalentLeads</span>
+              <img class="w-auto h-8" src="{% static 'vendors/images/logo-2.png' %}" alt="TalentLeads Logo"/>
             </a>
             <button data-action="dropdown#toggle click@window->dropdown#hide" type="button" class="-m-2.5 rounded-md p-2.5 text-gray-700">
               <span class="sr-only">Close menu</span>
@@ -154,8 +154,16 @@
 
     <div class="px-2 sm:px-0">
       {% block content %}
-      {% endblock %}
+      {% endblock content %}
     </div>
+
+    <footer class="bg-white">
+      <div class="px-6 py-12 mx-auto max-w-7xl md:flex md:items-center md:justify-between lg:px-8">
+        <div class="mt-8 md:order-1 md:mt-0">
+          <p class="text-xs leading-5 text-center text-gray-500">&copy; 2023 LVTD, LLC. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
 
   </div>
 
@@ -164,9 +172,9 @@
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      "name": "HN Profiles",
+      "name": "TalentLeads",
       "description": "Searchable Database of HN users **Who Want to be Hired**.",
-      "thumbnailUrl": "https://{{ request.get_host }}{% static 'vendors/images/logo.png' %}",
+      "thumbnailUrl": "https://{{ request.get_host }}{% static 'vendors/images/logo-2.png' %}",
       "url": "https://{{ request.get_host }}/",
       "author": {
         "@type": "Person",

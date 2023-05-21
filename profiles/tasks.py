@@ -148,7 +148,7 @@ def send_outreach_email_task(subject_line, message, receiver, user, send_to_list
     email = EmailMessage(
         subject=subject_line,
         body=message,
-        from_email="rasul@hnprofiles.com",
+        from_email="rasul@gettalentleads.com",
         to=[receiver],
         reply_to=[user.email],
         cc=cc_s,

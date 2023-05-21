@@ -3,14 +3,13 @@ import logging
 from django import forms
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.core.paginator import Paginator
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import DetailView, FormView
 from django_filters.views import FilterView
-from django_q.tasks import async_task, result
+from django_q.tasks import async_task
 
-from hackernews_developers.utils import floor_to_tens
+from talentleads.utils import floor_to_tens
 from users.models import Outreach, OutreachTemplate
 from utils.views import add_users_context
 

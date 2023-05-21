@@ -1,5 +1,5 @@
 """
-ASGI config for hackernews_developers project.
+ASGI config for talentleads project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hackernews_developers.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "talentleads.settings")
 
 application = get_asgi_application()

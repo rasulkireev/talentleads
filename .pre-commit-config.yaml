@@ -51,6 +51,6 @@ repos:
 #           "-rn",
 #           "-sn",
 #           "--load-plugins=pylint_django",
-#           "--django-settings-module=hackernews_developers.settings",
+#           "--django-settings-module=talentleads.settings",
 #           --ignore=manage.py,
 #         ]
