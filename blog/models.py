@@ -27,6 +27,7 @@ class BlogPage(Page):
     body = RichTextField(blank=True)
 
     icon = models.ForeignKey("wagtailimages.Image", on_delete=models.PROTECT, related_name="+")
+    main_image = models.ForeignKey("wagtailimages.Image", on_delete=models.PROTECT, related_name="+")
 
     search_fields = Page.search_fields + [
         index.SearchField("intro"),
