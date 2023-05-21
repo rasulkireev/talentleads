@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "talentleads"
 version = "0.1.0"
-description = "List of HackerNews Developers"
+description = "Find the Best Talent for Your Startup"
 authors = ["Rasul Kireev <me@rasulkireev.com>"]
 
 [tool.poetry.dependencies]
