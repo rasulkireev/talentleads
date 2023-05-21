@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "hackernews_developers"
+name = "talentleads"
 version = "0.1.0"
 description = "List of HackerNews Developers"
 authors = ["Rasul Kireev <me@rasulkireev.com>"]
@@ -62,7 +62,7 @@ include = '\.pyi?$'
 
 [tool.djlint]
 profile="django"
-ignore = "H031"
+ignore = "H031,H006,H023"
 
 [tool.ruff]
 line-length = 120

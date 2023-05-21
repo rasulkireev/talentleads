@@ -14,7 +14,7 @@ def email_support_request(instance):
     send_mail(
         f"Support Request from {instance['current_user'].username}",
         message,
-        "rasul@hnprofiles.com",
-        ["rasul@hnprofiles.com"],
+        "rasul@gettalentleads.com",
+        ["rasul@gettalentleads.com"],
         fail_silently=False,
     )

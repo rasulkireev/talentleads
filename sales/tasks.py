@@ -10,14 +10,14 @@ logger = logging.getLogger(__file__)
 def send_marketing_email(person):
     to_email = person["email"]
     first_name = person["name"].split(" ")[0]
-    from_email = "rasul@hnprofiles.email"
+    from_email = "rasul@gettalentleads.com"
     subject_line = "Quick Question"
     message = f"""
 Hi {first_name},
 
 Hope your day is going well so far - just saw your post on HackerNews "Who is Hiring?" and thought I’d reach out.
 
-I just lauhcned HN Profiles - https://hnprofiles.com - to help companies like {person['company__name']} find the most talented and qualified candidates.
+I just lauhcned TalentLeads - https://gettalentleads.com - to help companies like {person['company__name']} find the most talented and qualified candidates.
 
 There are more than 2k candidates available now and growing. The self-serve database + email outreach costs $299/month.
 
@@ -31,8 +31,8 @@ Thanks, Rasul
 Rasul Kireev | Founder
 Five Greentree Centre, 525 Route 73 North STE 104 Marlton, New Jersey 08053
 Mobile: 978 912 0496
-rasul@hnprofiles.com
-hnprofiles.com
+rasul@gettalentleads.com
+gettalentleads.com
     """  # noqa E501
 
     email = Email(
