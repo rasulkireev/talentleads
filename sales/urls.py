@@ -1,7 +1,7 @@
 from django.urls import path
 
-from .views import get_emails
+from .views import send_marketing_emails
 
 urlpatterns = [
-    path("", get_emails, name="get-emails"),
+    path("", send_marketing_emails, name="send-marketing-emails"),
 ]

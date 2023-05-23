@@ -15,6 +15,31 @@ def send_marketing_email(person):
     message = f"""
 Hi {first_name},
 
+I saw on HackerNews that you are hiring at {person['company__name']}.
+Can I ask you a few questions about your hiring process?
+
+Best,
+Rasul
+    """  # noqa E501
+
+    email = Email(
+        from_email=from_email,
+        to_email=to_email,
+        reply_to_email=from_email,
+        subject=subject_line,
+        body=message,
+    )
+    email.save()
+
+    email = EmailMessage(subject=subject_line, body=message, from_email=from_email, to=[to_email])
+    email.send(fail_silently=True)
+
+    logger.info(f"Sent email to {first_name}: {to_email}")
+
+
+serious_message = """
+Hi {first_name},
+
 Hope your day is going well so far - just saw your post on HackerNews "Who is Hiring?" and thought I’d reach out.
 
 I just lauhcned TalentLeads - https://gettalentleads.com - to help companies like {person['company__name']} find the most talented and qualified candidates.
@@ -33,17 +58,4 @@ Five Greentree Centre, 525 Route 73 North STE 104 Marlton, New Jersey 08053
 Mobile: 978 912 0496
 rasul@gettalentleads.com
 gettalentleads.com
-    """  # noqa E501
-
-    email = Email(
-        from_email=from_email,
-        to_email=to_email,
-        reply_to_email=from_email,
-        subject=subject_line,
-        body=message,
-    )
-    email.save()
-
-    email = EmailMessage(subject=subject_line, body=message, from_email=from_email, to=[to_email])
-
-    email.send(fail_silently=True)
+"""  # noqa E501
