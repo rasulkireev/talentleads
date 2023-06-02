@@ -5,14 +5,14 @@
 {% block meta %}
     <title>HN Profile - {{ object.title }}</title>
     <meta name="description" content="{{ object.description }}"/>
-    <link rel="canonical" href="https://{{ request.get_host }}/profile/{{ object.id }}" />
+    <link rel="canonical" href="https://{{ request.get_host }}/profiles/{{ object.id }}" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:creator" content="@rasulkireev" />
     <meta name="twitter:title" content="HN Profile - {{ object.title }}" />
     <meta name="twitter:description" content="{{ object.description }}"/>
     <meta name="twitter:image" content="https://{{ request.get_host }}{% static 'vendors/images/logo-2.png' %}" />
     <meta property="og:title" content="HN Profile - {{ object.title }}" />
-    <meta property="og:url" content="https://{{ request.get_host }}/profile/{{ object.id }}" />
+    <meta property="og:url" content="https://{{ request.get_host }}/profiles/{{ object.id }}" />
     <meta property="og:description" content="{{ object.description }}"/>
     <meta property="og:image" content="https://{{ request.get_host }}{% static 'vendors/images/logo-2.png' %}" />
 {% endblock meta %}
@@ -308,7 +308,7 @@
     "@type": "WebSite",
     "name": "HN Profile - {{ object.title }}",
     "description": "{{ object.description }}",
-    "url": "https://{{ request.get_host }}/profile/{{ object.id }}"
+    "url": "https://{{ request.get_host }}/profiles/{{ object.id }}"
   }
   </script>
 {% endblock schema %}
