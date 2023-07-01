@@ -11,17 +11,17 @@
         <div class="col-span-6 sm:col-span-3">
           {{ form.name.errors | safe }}
           <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-          {% render_field form.name id="name" name="name" type="text" autocomplete="given-name" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm" %}
+          {% render_field form.name id="name" name="name" type="text" autocomplete="given-name" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %}
         </div>
         <div class="col-span-6 sm:col-span-3">
           {{ form.email.errors | safe }}
           <label for="email-address" class="block text-sm font-medium text-gray-700">Email</label>
-          {% render_field form.email id="email-address" name="email-address" type="text" autocomplete="email" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm" %}
+          {% render_field form.email id="email-address" name="email-address" type="text" autocomplete="email" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %}
         </div>
       </div>
     </div>
     <div class="px-4 py-3 text-right bg-gray-50 sm:px-6">
-      <button type="submit" class="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-orange-600 border border-transparent rounded-md shadow-sm hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">Save</button>
+      <button type="submit" class="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Save</button>
     </div>
   </div>
 </form>

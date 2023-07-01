@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load markdown_extras %}
 {% load widget_tweaks %}
 
@@ -21,7 +21,7 @@
                     <button type="button" class="w-full text-left" data-action="dropdown#toggle click->dropdown#hide">
                       <h3 class="text-lg font-medium leading-6 text-gray-900">{{ template.title }}</h3>
                     </button>
-                      <form method="POST" action="{% url 'update-template' template.id %}" data-dropdown-target="menu">
+                      <form method="post" action="{% url 'update-template' template.id %}" data-dropdown-target="menu">
                         {% csrf_token %}
                         {{ update_form.non_field_errors }}
                           <div class="px-4 py-6 sm:p-6">
@@ -64,8 +64,8 @@
           </div>
 
           <div class="mt-4">
-            <div data-controller="dropdown" class="border border-orange-200 sm:overflow-hidden sm:rounded-md">
-              <button type="button" class="w-full p-4 text-left bg-orange-50 hover:bg-orange-100" data-action="dropdown#toggle click->dropdown#hide">
+            <div data-controller="dropdown" class="border border-blue-200 sm:overflow-hidden sm:rounded-md">
+              <button type="button" class="w-full p-4 text-left bg-blue-50 hover:bg-blue-100" data-action="dropdown#toggle click->dropdown#hide">
                 <h3 class="text-lg font-medium leading-6 text-gray-900">Create a New Template</h3>
               </button>
               <form method="post" action="" data-dropdown-target="menu">
@@ -100,7 +100,7 @@
 
                   </div>
                   <div class="px-4 py-3 text-right bg-gray-50 sm:px-6">
-                    <button type="submit" class="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-orange-600 border border-transparent rounded-md shadow-sm hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-900 focus:ring-offset-2">
+                    <button type="submit" class="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:ring-offset-2">
                       Save
                     </button>
                   </div>
