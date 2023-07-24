@@ -10,7 +10,7 @@ logger = logging.getLogger(__file__)
 def send_marketing_email(person):
     to_email = person["email"]
     first_name = person["name"].split(" ")[0]
-    from_email = "rasul@gettalentleads.com"
+    from_email = "Rasul Kireev <rasul@gettalentleads.com>"
     subject_line = "Quick Question"
     message = f"""
 Hi {first_name},

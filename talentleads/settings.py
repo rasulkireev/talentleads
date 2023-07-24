@@ -35,8 +35,6 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
 
 DEBUG = env("DEBUG")
 
-# Application definition
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -262,8 +260,8 @@ ANYMAIL = {
     "MAILGUN_API_KEY": env("MAILGUN_API_KEY"),
     "MAILGUN_SENDER_DOMAIN": "mg.gettalentleads.com",
 }
-DEFAULT_FROM_EMAIL = "rasul@gettalentleads.email"
-SERVER_EMAIL = "error@gettalentleads.email"
+DEFAULT_FROM_EMAIL = "Talent Leads <rasul@gettalentleads.email>"
+SERVER_EMAIL = "Talent Leads <error@gettalentleads.email>"
 
 if DEBUG:
     EMAIL_HOST = "localhost"
