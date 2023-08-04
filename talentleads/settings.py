@@ -236,15 +236,13 @@ LOGGING = {
     },
 }
 
-
-# django-q
 Q_CLUSTER = {
-    "name": "talentleads-q",
-    "orm": "default",
+    "name": "talendleads-q",
     "timeout": 90,
     "retry": 120,
     "workers": 4,
     "max_attempts": 2,
+    "redis": env("REDIS_URL"),
 }
 
 OPENAI_KEY = env("OPENAI_KEY")
@@ -266,7 +264,6 @@ SERVER_EMAIL = "Talent Leads <error@gettalentleads.email>"
 if DEBUG:
     EMAIL_HOST = "localhost"
     EMAIL_PORT = 1025
-    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 else:
     EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
 
@@ -285,3 +282,17 @@ sentry_sdk.init(
         DjangoIntegration(),
     ],
 )
+
+if DEBUG:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": env("REDIS_URL"),
+        }
+    }
