@@ -20,6 +20,7 @@ class Command(BaseCommand):
                     hook=schedule["hook"],
                     args=schedule["args"],
                     schedule_type=schedule["type"],
+                    cron=schedule["cron"],
                 )
                 logger.info(f"Schedule `{schedule['name']}` is created.")
             else:
