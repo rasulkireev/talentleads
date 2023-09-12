@@ -94,7 +94,7 @@ def send_outreach_email(request, profile_id, email_template_id):
             profile.email,
             user,
             template.cc_s,
-            hook="hooks.email_sent",
+            hook="profiles.hooks.email_sent",
         )
         messages.add_message(request, messages.INFO, "Email Sent. Check your email, you were CC'd.")
     else:
