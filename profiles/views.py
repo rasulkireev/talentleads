@@ -71,7 +71,7 @@ class TriggerAsyncTask(LoginRequiredMixin, UserPassesTestMixin, FormView):
 
     def form_valid(self, form):
         who_wants_to_be_hired_post_id = form.cleaned_data.get("who_wants_to_be_hired_post_id")
-        async_task(get_hn_pages_to_analyze, who_wants_to_be_hired_post_id, hook="hooks.print_result")
+        async_task(get_hn_pages_to_analyze, who_wants_to_be_hired_post_id, hook="profiles.hooks.print_result")
         return super(TriggerAsyncTask, self).form_valid(form)
 
 
@@ -94,7 +94,7 @@ def send_outreach_email(request, profile_id, email_template_id):
             profile.email,
             user,
             template.cc_s,
-            hook="hooks.email_sent",
+            hook="profiles.hooks.email_sent",
         )
         messages.add_message(request, messages.INFO, "Email Sent. Check your email, you were CC'd.")
     else:

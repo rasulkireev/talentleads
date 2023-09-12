@@ -1,10 +1,43 @@
 import logging
 
+import httpx
+from django.conf import settings
 from django.core.mail import EmailMessage
+from django.db.models import Q
+from django_q.tasks import async_task
 
 from .models import Email
 
 logger = logging.getLogger(__file__)
+
+
+def send_marketing_emails_task():
+    response = httpx.get(
+        settings.HNJOBS_HOST + "/api/emails",
+        headers={"Authorization": f"Bearer {settings.HNJOBS_API_TOKEN}"},
+        params={"only-approved": True},
+    )
+    status_code = response.status_code
+    logger.info(f"Getting Emails... Result: {status_code}")
+
+    if status_code == 200:
+        data = response.json()
+
+        emails_sent = 0
+        email_limit = 10
+
+        for person in data["emails"]:
+            email_obj = Email.objects.filter(Q(to_email=person["email"]) & Q(failed=False))
+            if not email_obj.exists():
+                async_task(send_marketing_email, person, hook="profiles.hooks.print_result", group="Sales")
+                emails_sent += 1
+
+            if emails_sent >= email_limit:
+                break
+
+        return f"{emails_sent} emails will be sent."
+
+    return "Something went wrong"
 
 
 def send_marketing_email(person):

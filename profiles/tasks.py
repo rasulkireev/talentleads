@@ -37,7 +37,7 @@ def get_hn_pages_to_analyze(who_wants_to_be_hired_post_id):
                 analyze_hn_page,
                 data,
                 comment_id,
-                hook="jobs.hooks.print_result",
+                hook="profiles.hooks.print_result",
                 group="Analyze HN Page",
             )
             count += 1
@@ -153,7 +153,7 @@ def analyze_hn_page(orig_data, comment_id):
 # Schedule.objects.create(
 #     func=analyze_hn_page,
 #     args=34983765,
-#     hook="hooks.print_result",
+#     hook="profiles.hooks.print_result",
 #     schedule_type=Schedule.CRON,
 #     cron = '0 0 * * *'
 # )

@@ -8,7 +8,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, DeleteView, FormView, UpdateView
+from django.views.generic import CreateView, FormView, UpdateView
 from django_q.tasks import async_task
 from djstripe import models, settings as djstripe_settings, webhooks
 
@@ -121,7 +121,7 @@ class SupportView(LoginRequiredMixin, SuccessMessageMixin, FormView):
         return context
 
     def form_valid(self, form):
-        async_task(email_support_request, form.cleaned_data, hook="hooks.email_sent")
+        async_task(email_support_request, form.cleaned_data, hook="users.hooks.email_sent")
         return super(SupportView, self).form_valid(form)
 
     def get_form_kwargs(self):
