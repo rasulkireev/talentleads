@@ -11,7 +11,7 @@ schedules = [
     },
     {
         "name": "Send Marketing Emails",
-        "func_path": "sales.tasks.send_marketing_emails",
+        "func_path": "sales.tasks.send_marketing_emails_task",
         "hook": "profiles.hooks.print_result",
         "args": None,
         "type": Schedule.CRON,
