@@ -21,7 +21,7 @@ class BlogIndexPage(Page):
 
 
 class BlogPage(Page):
-    date_created = models.DateField("Create Date")
+    date_created = models.DateField("Created Date")
     date_modified = models.DateField("Modified Date")
     intro = models.CharField(max_length=250)
     body = RichTextField(blank=True)
