@@ -105,12 +105,12 @@ def analyze_hn_page(who_wants_to_be_hired_id, who_wants_to_be_hired_title, comme
         logger.info(f"Got Completion for {comment_id}")
         converted_comment_response = completion.choices[0].message
     except (openai.RateLimitError, openai.error.APIError) as e:
-        return logger.error(e)
+        raise e
 
     try:
         json_converted_comment_response = json.loads(converted_comment_response.content)
     except json.decoder.JSONDecodeError:
-        return "Data was not in the JSON format"
+        raise "Data was not in the JSON format"
 
     cleaned_data = clean_profile_json_object(json_profile, json_converted_comment_response)
 
