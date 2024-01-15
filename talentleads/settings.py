@@ -58,7 +58,6 @@ INSTALLED_APPS = [
     "profiles.apps.ProfilesConfig",
     "sales.apps.SalesConfig",
     "utils.apps.UtilsConfig",
-    "blog.apps.BlogConfig",
 ]
 
 MIDDLEWARE = [
