@@ -53,25 +53,11 @@ INSTALLED_APPS = [
     "django_filters",
     "djstripe",
     "anymail",
-    "wagtail.contrib.forms",
-    "wagtail.contrib.redirects",
-    "wagtail.embeds",
-    "wagtail.sites",
-    "wagtail.users",
-    "wagtail.snippets",
-    "wagtail.documents",
-    "wagtail.images",
-    "wagtail.search",
-    "wagtail.admin",
-    "wagtail",
-    "taggit",
-    "modelcluster",
     "pages.apps.PagesConfig",
     "users.apps.UsersConfig",
     "profiles.apps.ProfilesConfig",
     "sales.apps.SalesConfig",
     "utils.apps.UtilsConfig",
-    "blog.apps.BlogConfig",
 ]
 
 MIDDLEWARE = [
@@ -83,7 +69,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 
 # if DEBUG:
@@ -269,11 +254,6 @@ else:
 
 HNJOBS_API_TOKEN = env("HNJOBS_API_TOKEN")
 HNJOBS_HOST = env("HNJOBS_HOST")
-
-# Wagtail
-WAGTAIL_SITE_NAME = "TalentLeads"
-WAGTAILADMIN_BASE_URL = "https://gettalentleads.com"
-TAGGIT_CASE_INSENSITIVE = True
 
 # Sentry
 sentry_sdk.init(

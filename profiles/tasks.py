@@ -7,6 +7,7 @@ import openai
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django_q.tasks import async_task
+from openai import OpenAI
 
 from .models import Profile, Technology
 from .utils import clean_profile_json_object
@@ -15,7 +16,7 @@ from .utils import clean_profile_json_object
 
 
 logger = logging.getLogger(__file__)
-openai.api_key = settings.OPENAI_KEY
+client = OpenAI(api_key=settings.OPENAI_KEY)
 
 
 def get_hn_pages_to_analyze(who_wants_to_be_hired_post_id):
@@ -28,14 +29,15 @@ def get_hn_pages_to_analyze(who_wants_to_be_hired_post_id):
 
     # if working in dev don't want to go through all the comments
     if settings.DEBUG:
-        list_of_comment_ids = list_of_comment_ids[:150]
+        list_of_comment_ids = list_of_comment_ids[:10]
 
     count = 0
     for comment_id in list_of_comment_ids:
         if not Profile.objects.filter(who_wants_to_be_hired_comment_id=comment_id).exists():
             async_task(
                 analyze_hn_page,
-                data,
+                int(data["id"]),
+                str(re.search("\(([^)]+)", data["title"]).group(1)),
                 comment_id,
                 hook="profiles.hooks.print_result",
                 group="Analyze HN Page",
@@ -47,10 +49,7 @@ def get_hn_pages_to_analyze(who_wants_to_be_hired_post_id):
     return f"{count} have been sent to be analyzed."
 
 
-def analyze_hn_page(orig_data, comment_id):
-    who_wants_to_be_hired_id = int(orig_data["id"])
-    who_wants_to_be_hired_title = str(re.search("\(([^)]+)", orig_data["title"]).group(1))
-
+def analyze_hn_page(who_wants_to_be_hired_id, who_wants_to_be_hired_title, comment_id):
     logger.info(f"Analyzing comment {comment_id}")
     json_profile = httpx.get(f"https://hacker-news.firebaseio.com/v0/item/{comment_id}.json").json()
 
@@ -91,8 +90,9 @@ def analyze_hn_page(orig_data, comment_id):
     """  # noqa: E501
 
     try:
-        completion = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+        completion = client.chat.completions.create(
+            model="gpt-3.5-turbo-1106",
+            response_format={"type": "json_object"},
             temperature=0,
             messages=[
                 {
@@ -104,7 +104,7 @@ def analyze_hn_page(orig_data, comment_id):
         )
         logger.info(f"Got Completion for {comment_id}")
         converted_comment_response = completion.choices[0].message
-    except (openai.error.RateLimitError, openai.error.APIError) as e:
+    except (openai.RateLimitError, openai.error.APIError) as e:
         return logger.error(e)
 
     try:
@@ -147,7 +147,7 @@ def analyze_hn_page(orig_data, comment_id):
 
     logger.info(f"{profile} profile was created.")
 
-    return "Task Completed"
+    return f"Comment {comment_id} Saved"
 
 
 # Schedule.objects.create(

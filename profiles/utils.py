@@ -45,7 +45,7 @@ def check_years_of_experience_value(years: int, text: str):
         return None
 
 
-def check_that_level_is_one_the_allowed_values(level: str) -> bool:
+def check_that_level_is_one_the_allowed_values(level: str) -> str:
     if level in ["Senior", "Mid-level", "Junior", "Principal", "C-Level"]:
         return level
     else:
