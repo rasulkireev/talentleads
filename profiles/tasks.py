@@ -12,9 +12,6 @@ from openai import OpenAI
 from .models import Profile, Technology
 from .utils import clean_profile_json_object
 
-# from django_q.models import Schedule
-
-
 logger = logging.getLogger(__file__)
 client = OpenAI(api_key=settings.OPENAI_KEY)
 
