@@ -16,6 +16,7 @@ export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
 
 python manage.py collectstatic --noinput
 python manage.py migrate
+python manage.py createschedules
 
 while getopts ":sw" option; do
     case "${option}" in
