@@ -1,9 +1,9 @@
-name: Deploy Prod
+name: Deploy Prod Workers
 
 on:
   push:
     branches:
-        - main
+        - master
 
 jobs:
   build-and-deploy:
@@ -28,12 +28,13 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository }}
+          file: deployment/Dockerfile.workers
+          tags: ghcr.io/${{ github.repository }}-workers
 
       - name: Deploy to CapRover
         uses: caprover/deploy-from-github@main
         with:
-            server: ${{ secrets.CAPROVER_SERVER }}
-            app: ${{ github.repository }}
-            token: '${{ secrets.APP_TOKEN }}'
-            image: ghcr.io/${{ github.repository }}
+          server: ${{ secrets.CAPROVER_SERVER }}
+          app: ${{ github.repository }}-workers
+          token: '${{ secrets.WORKERS_APP_TOKEN }}'
+          image: ghcr.io/${{ github.repository }}-workers
