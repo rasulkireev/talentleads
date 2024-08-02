@@ -88,7 +88,7 @@ def analyze_hn_page(who_wants_to_be_hired_id, who_wants_to_be_hired_title, comme
 
     try:
         completion = client.chat.completions.create(
-            model="gpt-3.5-turbo-1106",
+            model="gpt-4o-mini",
             response_format={"type": "json_object"},
             temperature=0,
             messages=[
