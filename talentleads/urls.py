@@ -18,6 +18,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
+from django.views.generic import TemplateView
 
 from .sitemaps import sitemaps
 
@@ -29,6 +30,7 @@ urlpatterns = (
         path("", include("pages.urls")),
         path("profiles/", include("profiles.urls")),
         path("sales/", include("sales.urls")),
+        path("uses", TemplateView.as_view(template_name="pages/uses.html"), name="uses"),
         path("stripe/", include("djstripe.urls", namespace="djstripe")),
         path("sitemap.xml", sitemap, sitemaps),
     ]
