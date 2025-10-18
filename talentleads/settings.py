@@ -15,6 +15,8 @@ import os
 from pathlib import Path
 
 import environ
+import logfire
+from talentleads.logging_utils import scrubbing_callback
 import sentry_sdk
 import structlog
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -33,6 +35,14 @@ env = environ.Env(
 ENVIRONMENT = env("ENVIRONMENT")
 
 SENTRY_DSN = env("SENTRY_DSN", default="")
+
+LOGFIRE_TOKEN = env("LOGFIRE_TOKEN", default="")
+
+if LOGFIRE_TOKEN != "":
+    logfire.configure(
+        environment=ENVIRONMENT,
+        scrubbing=logfire.ScrubbingOptions(callback=scrubbing_callback),
+    )
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
@@ -61,6 +71,7 @@ INSTALLED_APPS = [
     "django.contrib.sitemaps",
     "webpack_boilerplate",
     "widget_tweaks",
+    "django_extensions",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -455,3 +466,6 @@ else:
             "LOCATION": REDIS_URL,
         }
     }
+
+JINA_API_KEY = env("JINA_API_KEY")
+GEMINI_API_KEY = env("GEMINI_API_KEY")

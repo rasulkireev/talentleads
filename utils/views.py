@@ -4,7 +4,9 @@ from allauth.account.models import EmailAddress
 from django.db.utils import IntegrityError
 from djstripe.models import Customer, Subscription
 
-logger = logging.getLogger(__file__)
+from talentleads.utils import get_talentleads_logger
+
+logger = get_talentleads_logger(__name__)
 
 
 def add_users_context(context, user):
@@ -17,16 +19,16 @@ def add_users_context(context, user):
             subscription = Subscription.objects.get(customer=customer)
             logger.info(f"Adding subscription {subscription} to context.")
             context["subscription"] = subscription
-        except Subscription.DoesNotExist as e:
+        except Subscription.DoesNotExist:
             pass
 
-    except (Customer.DoesNotExist, IntegrityError) as e:
+    except (Customer.DoesNotExist, IntegrityError):
         customer = Customer.create(subscriber=user)
         logging.info(f"Created User: {customer}")
 
     try:
         context["email_verified"] = EmailAddress.objects.get_for_user(user, user.email).verified
-    except EmailAddress.DoesNotExist as e:
-        logger.error(f"User doesn't have a Verfiied Email")
+    except EmailAddress.DoesNotExist:
+        logger.error("User doesn't have a Verfiied Email")
 
     return context

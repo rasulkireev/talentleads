@@ -1,19 +1,42 @@
-import json
-import logging
 import re
 
 import httpx
-import openai
+import requests
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django_q.tasks import async_task
-from openai import OpenAI
 
-from .models import Profile, Technology
-from .utils import clean_profile_json_object
+from profiles.agents import profile_analyzer_agent
+from talentleads.utils import get_talentleads_logger, run_agent_synchronously
 
-logger = logging.getLogger(__file__)
-client = OpenAI(api_key=settings.OPENAI_KEY)
+from profiles.models import Profile, Technology
+from profiles.utils import clean_profile_json_object
+
+logger = get_talentleads_logger(__name__)
+
+
+def get_jina_embedding(text):
+    """Get embedding from Jina API for the given text."""
+    url = "https://api.jina.ai/v1/embeddings"
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {settings.JINA_API_KEY}"}
+    data = {"model": "jina-embeddings-v3", "task": "text-matching", "input": [text]}
+
+    try:
+        response = requests.post(url, headers=headers, json=data)
+        response.raise_for_status()
+        result = response.json()
+
+        # Extract the embedding from the first result
+        if result.get("data") and len(result["data"]) > 0:
+            embedding = result["data"][0]["embedding"]
+            logger.info(f"Successfully generated embedding with {len(embedding)} dimensions")
+            return embedding
+        else:
+            logger.error(f"Unexpected response format from Jina API: {result}")
+            return None
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error getting embedding from Jina API: {e}")
+        return None
 
 
 def get_hn_pages_to_analyze(who_wants_to_be_hired_post_id):
@@ -26,7 +49,7 @@ def get_hn_pages_to_analyze(who_wants_to_be_hired_post_id):
 
     # if working in dev don't want to go through all the comments
     if settings.DEBUG:
-        list_of_comment_ids = list_of_comment_ids[:10]
+        list_of_comment_ids = list_of_comment_ids[:20]
 
     count = 0
     for comment_id in list_of_comment_ids:
@@ -59,64 +82,26 @@ def analyze_hn_page(who_wants_to_be_hired_id, who_wants_to_be_hired_title, comme
     who_wants_to_be_hired_comment_id = int(json_profile["id"])
     hn_username = str(json_profile["by"])
 
-    logger.info(f"JSON for comment {comment_id}: {json_profile}")
+    result = run_agent_synchronously(
+        profile_analyzer_agent,
+        "Analyze the following profile and provide a detailed analysis of the profile.",
+        deps=json_profile["text"],
+        function_name="analyze_hn_page",
+    )
 
-    request = f"""Convert the text below into json object with the following valid keys (give me an empty string if there is no info, ignore the content in  brackets, it is only to explain what I need):
-        - location (can't be empty)
-        - city (figure out from location, can't be empty)
-        - country (figure out from location, can't be empty)
-        - state (if country is USA please guess the state, otherwise empty string. keep the short format, like MA, NY, etc.)
-        - is_remote (boolean)
-        - willing_to_relocate (choose from: Yes, No, Maybe. can't be empty)
-        - technologies_used (string of comma separated values. split values like HTML/CSS into HTML, CSS)
-        - resume_link (valid url or empty)
-        - email (valid email or empty)
-        - personal_website (valid url or empty)
-        - description (can't be empty)
-        - name (Full Name if mentioned)
-        - title (come up with a short - 6 words max - title based on one of the technologies_used and description, can't be empty)
-        - level (choose from these options: Junior, Mid-level, Senior, Principal, C-Level. figure out from description, can't be empty)
-        - years_of_experience (figure out from description, make a best guess, can't be empty. make sure this is an integer, so no values like 40+, only 40)
-        - capacity (string of comma separated values. options are 'Part-time Contractor', 'Full-time Contractor', 'Part-time Employee' and 'Full-time Employee', can't be empty)
+    data = result.output.__dict__
 
-        Don't add any text and only respond with a JSON Object.
+    cleaned_data = clean_profile_json_object(json_profile, data)
 
-        Text: '''
-        {json_profile['text']}
-        '''
-    """  # noqa: E501
-
-    try:
-        completion = client.chat.completions.create(
-            model="gpt-4o-mini",
-            response_format={"type": "json_object"},
-            temperature=0,
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a helpful assistant.",
-                },
-                {"role": "user", "content": request},
-            ],
-        )
-        logger.info(f"Got Completion for {comment_id}")
-        converted_comment_response = completion.choices[0].message
-    except (openai.RateLimitError, openai.error.APIError) as e:
-        raise e
-
-    try:
-        json_converted_comment_response = json.loads(converted_comment_response.content)
-    except json.decoder.JSONDecodeError:
-        raise "Data was not in the JSON format"
-
-    cleaned_data = clean_profile_json_object(json_profile, json_converted_comment_response)
-
-    technology_names = [name.strip() for name in cleaned_data["technologies_used"].split(",")]
+    technology_names = cleaned_data["technologies_used"]
     technologies = []
     for name in technology_names:
         if name != "":
             obj, _ = Technology.objects.get_or_create(name=name)
             technologies.append(obj)
+
+    # Generate embedding from the profile description
+    embedding = get_jina_embedding(json_profile["text"])
 
     profile = Profile(
         latest_who_wants_to_be_hired_id=who_wants_to_be_hired_id,
@@ -138,6 +123,7 @@ def analyze_hn_page(who_wants_to_be_hired_id, who_wants_to_be_hired_title, comme
         email=cleaned_data["email"],
         years_of_experience=cleaned_data["years_of_experience"],
         capacity=cleaned_data["capacity"],
+        embedding=embedding,
     )
     profile.save()
     profile.tech_stack.add(*technologies)

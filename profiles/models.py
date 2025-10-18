@@ -4,6 +4,7 @@ from autoslug import AutoSlugField
 from django.db import models
 from django.urls import reverse
 from model_utils.models import TimeStampedModel
+from pgvector.django import HnswIndex, VectorField
 
 
 class Profile(TimeStampedModel):
@@ -35,6 +36,21 @@ class Profile(TimeStampedModel):
     email = models.EmailField(blank=True)
     who_wants_to_be_hired_comment_id = models.IntegerField()
     hn_username = models.CharField(max_length=50, blank=True)
+
+    # AI
+    embedding = VectorField(dimensions=1024, default=None, null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            HnswIndex(name="vector_index", fields=["embedding"], m=16, ef_construction=64, opclasses=["vector_l2_ops"]),
+            HnswIndex(
+                name="vectors_index_2",
+                fields=["embedding"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_cosine_ops"],
+            ),
+        ]
 
     def __str__(self):
         return self.title

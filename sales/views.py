@@ -1,11 +1,11 @@
-import logging
-
 from django.contrib import messages
 from django.shortcuts import redirect
 
+from talentleads.utils import get_talentleads_logger
+
 from .tasks import send_marketing_emails_task
 
-logger = logging.getLogger(__file__)
+logger = get_talentleads_logger(__name__)
 
 
 def send_marketing_emails(request):

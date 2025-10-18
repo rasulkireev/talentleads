@@ -1,12 +1,10 @@
-import logging
-
 from django.views.generic import TemplateView
 
 from profiles.models import Profile
-from talentleads.utils import floor_to_thousands
+from talentleads.utils import floor_to_thousands, get_talentleads_logger
 from utils.views import add_users_context
 
-logger = logging.getLogger(__file__)
+logger = get_talentleads_logger(__name__)
 
 
 class HomeView(TemplateView):

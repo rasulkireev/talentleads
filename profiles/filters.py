@@ -1,41 +1,28 @@
 from django import forms
 from django.db.models import Count
-from django_filters import (
-    AllValuesMultipleFilter,
-    CharFilter,
-    FilterSet,
-    ModelMultipleChoiceFilter,
-    MultipleChoiceFilter,
-    NumberFilter,
-)
+from django_filters import CharFilter, FilterSet, ModelMultipleChoiceFilter, NumberFilter
+from django_filters.filters import MultipleChoiceFilter as BaseMultipleChoiceFilter
+
+from profiles.choices import CapacityChoices
 
 from .models import Profile, Technology
 
 
-class FrequencyOrderedAllValuesMultipleFilter(AllValuesMultipleFilter):
-    def field_choices(self, *args, **kwargs):
-        queryset = (
-            self.model._default_manager.distinct().order_by(self.field_name).values_list(self.field_name, flat=True)
-        )
-        lst = list(queryset)
-        # Count the frequency of each value and sort the choices by frequency in descending order
-        choices = sorted(
-            self.extra["choices_form_class"](list(enumerate(lst))),
-            key=lambda x: -lst.count(x[0]),
-        )
-        return choices
+# Custom MultipleChoiceFilter that uses standard Django forms field to avoid Python 3.13 compatibility issues
+class MultipleChoiceFilter(BaseMultipleChoiceFilter):
+    field_class = forms.MultipleChoiceField
 
 
 class ProfileFilter(FilterSet):
     title = CharFilter(lookup_expr="icontains")
     description = CharFilter(lookup_expr="icontains")
 
-    # location = CharFilter(lookup_expr='icontains')
-    city = AllValuesMultipleFilter(widget=forms.CheckboxSelectMultiple)
-    state = AllValuesMultipleFilter(widget=forms.CheckboxSelectMultiple)
-    country = AllValuesMultipleFilter(widget=forms.CheckboxSelectMultiple)
+    # Using custom MultipleChoiceFilter to avoid Python 3.13 compatibility issues with django_filters
+    city = MultipleChoiceFilter(widget=forms.CheckboxSelectMultiple, choices=[])
+    state = MultipleChoiceFilter(widget=forms.CheckboxSelectMultiple, choices=[])
+    country = MultipleChoiceFilter(widget=forms.CheckboxSelectMultiple, choices=[])
 
-    level = AllValuesMultipleFilter(widget=forms.CheckboxSelectMultiple)
+    level = MultipleChoiceFilter(widget=forms.CheckboxSelectMultiple, choices=[])
     tech_stack = ModelMultipleChoiceFilter(
         queryset=Technology.objects.annotate(profile_count=Count("profiles"))
         .filter(profile_count__gt=10)
@@ -43,24 +30,16 @@ class ProfileFilter(FilterSet):
         widget=forms.CheckboxSelectMultiple(),
         conjoined=True,
     )
-    who_wants_to_be_hired_title = AllValuesMultipleFilter(widget=forms.CheckboxSelectMultiple)
+    who_wants_to_be_hired_title = MultipleChoiceFilter(widget=forms.CheckboxSelectMultiple, choices=[])
 
     years_of_experience = NumberFilter()
     years_of_experience__gt = NumberFilter(field_name="years_of_experience", lookup_expr="gt")
     years_of_experience__lt = NumberFilter(field_name="years_of_experience", lookup_expr="lt")
 
-    city = AllValuesMultipleFilter(widget=forms.CheckboxSelectMultiple)
-    country = AllValuesMultipleFilter(widget=forms.CheckboxSelectMultiple)
-    willing_to_relocate = AllValuesMultipleFilter(widget=forms.CheckboxSelectMultiple)
+    willing_to_relocate = MultipleChoiceFilter(widget=forms.CheckboxSelectMultiple, choices=[])
 
-    CAPACITY_CHOICES = [
-        ("Part-time Contractor", "Part-time Contractor"),
-        ("Full-time Contractor", "Full-time Contractor"),
-        ("Part-time Employee", "Part-time Employee"),
-        ("Full-time Employee", "Full-time Employee"),
-    ]
     capacity = MultipleChoiceFilter(
-        choices=CAPACITY_CHOICES,
+        choices=CapacityChoices.choices,
         widget=forms.CheckboxSelectMultiple,
         lookup_expr="icontains",
     )
@@ -81,4 +60,41 @@ class ProfileFilter(FilterSet):
             "state",
             "country",
             "capacity",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Dynamically populate choices from database
+        self.filters["city"].extra["choices"] = [
+            (val, val)
+            for val in Profile.objects.exclude(city="").values_list("city", flat=True).distinct().order_by("city")
+        ]
+        self.filters["state"].extra["choices"] = [
+            (val, val)
+            for val in Profile.objects.exclude(state="").values_list("state", flat=True).distinct().order_by("state")
+        ]
+        self.filters["country"].extra["choices"] = [
+            (val, val)
+            for val in Profile.objects.exclude(country="")
+            .values_list("country", flat=True)
+            .distinct()
+            .order_by("country")
+        ]
+        self.filters["level"].extra["choices"] = [
+            (val, val)
+            for val in Profile.objects.exclude(level="").values_list("level", flat=True).distinct().order_by("level")
+        ]
+        self.filters["who_wants_to_be_hired_title"].extra["choices"] = [
+            (val, val)
+            for val in Profile.objects.exclude(who_wants_to_be_hired_title="")
+            .values_list("who_wants_to_be_hired_title", flat=True)
+            .distinct()
+            .order_by("who_wants_to_be_hired_title")
+        ]
+        self.filters["willing_to_relocate"].extra["choices"] = [
+            (val, val)
+            for val in Profile.objects.exclude(willing_to_relocate="")
+            .values_list("willing_to_relocate", flat=True)
+            .distinct()
+            .order_by("willing_to_relocate")
         ]
