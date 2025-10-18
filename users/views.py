@@ -1,7 +1,8 @@
 import logging
 
 import stripe
-from allauth.account.utils import send_email_confirmation
+from allauth.account.adapter import get_adapter
+from allauth.account.models import EmailAddress
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -10,7 +11,8 @@ from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, FormView, UpdateView
 from django_q.tasks import async_task
-from djstripe import models, settings as djstripe_settings, webhooks
+from djstripe import models, settings as djstripe_settings
+from djstripe.event_handlers import djstripe_receiver
 
 from utils.views import add_users_context
 
@@ -71,7 +73,7 @@ def create_checkout_session(request):
     return redirect(checkout_session.url, code=303)
 
 
-@webhooks.handler("checkout.session.completed")
+@djstripe_receiver("checkout.session.completed")
 def successfull_payment_webhook(event, **kwargs):
     if event.type == "checkout.session.completed":
         customer = event.data["object"]["customer"]
@@ -93,7 +95,9 @@ def create_customer_portal_session(request):
 
 def resend_email_confirmation_email(request):
     user = request.user
-    send_email_confirmation(request, user, user.email)
+    adapter = get_adapter(request)
+    emailaddress = EmailAddress.objects.get_for_user(user, user.email)
+    adapter.send_confirmation_mail(request, emailaddress, signup=False)
 
     return redirect("settings")
 
