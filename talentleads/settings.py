@@ -10,12 +10,18 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
+import logging
 import os
 from pathlib import Path
 
 import environ
 import sentry_sdk
+import structlog
 from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
+from sentry_sdk.integrations.redis import RedisIntegration
+from structlog_sentry import SentryProcessor
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
@@ -25,15 +31,24 @@ env = environ.Env(
 )
 
 ENVIRONMENT = env("ENVIRONMENT")
+
+SENTRY_DSN = env("SENTRY_DSN", default="")
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
+# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY")
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
-CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
-
+# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
+
+SITE_URL = env("SITE_URL")
+
+# Remove the port from the SITE_URL and the https prefix (mostly for dev)
+ALLOWED_HOSTS = [SITE_URL.replace("http://", "").replace("https://", "").split(":")[0]]
+
+CSRF_TRUSTED_ORIGINS = [SITE_URL]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -68,11 +83,10 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_structlog.middlewares.RequestMiddleware",  # adds log for each request
 ]
-
-# if DEBUG:
-#   MIDDLEWARE.append("kolo.middleware.KoloMiddleware")
 
 ROOT_URLCONF = "talentleads.urls"
 
@@ -98,10 +112,22 @@ WSGI_APPLICATION = "talentleads.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-DATABASES = {
-    "default": env.db_url(),
-}
+POSTGRES_DB = env("POSTGRES_DB")
+POSTGRES_USER = env("POSTGRES_USER")
+POSTGRES_PASSWORD = env("POSTGRES_PASSWORD")
+POSTGRES_HOST = env("POSTGRES_HOST")
+POSTGRES_PORT = env("POSTGRES_PORT", default="5432")
 
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": POSTGRES_DB,
+        "USER": POSTGRES_USER,
+        "PASSWORD": POSTGRES_PASSWORD,
+        "HOST": POSTGRES_HOST,
+        "PORT": POSTGRES_PORT,
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -137,9 +163,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR.joinpath("media/")
-
 STATIC_URL = "/static/"
 
 STATIC_ROOT = BASE_DIR.joinpath("static/")
@@ -148,24 +171,44 @@ STATICFILES_DIRS = [
     BASE_DIR.joinpath("frontend/build"),
 ]
 
-# STORAGES = {
-#     'default': {
-#         'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
-#     },
-#     'staticfiles': {
-#         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
-#     }
-# }
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+folder_name = f"tuxseo-{ENVIRONMENT}"
+aws_s3_endpoint_url = env("AWS_S3_ENDPOINT_URL")
 
-AWS_S3_REGION_NAME = "nyc3"
-AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL")
-AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
-AWS_STORAGE_BUCKET_NAME = f"talentleads-{ENVIRONMENT}"
-AWS_S3_FILE_OVERWRITE = False
+MEDIA_URL = f"{aws_s3_endpoint_url}/{folder_name}/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
+
+if not aws_s3_endpoint_url:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+            "OPTIONS": {
+                "location": MEDIA_ROOT,
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+else:
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {
+                "bucket_name": folder_name,
+                "default_acl": "public-read",
+                "region_name": "eu-east-1",
+                "endpoint_url": aws_s3_endpoint_url,
+                "access_key": env("AWS_ACCESS_KEY_ID"),
+                "secret_key": env("AWS_SECRET_ACCESS_KEY"),
+                "querystring_auth": False,
+                "file_overwrite": False,
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 
 WEBPACK_LOADER = {
     "MANIFEST_FILE": BASE_DIR.joinpath("frontend/build/manifest.json"),
@@ -189,9 +232,8 @@ LOGIN_REDIRECT_URL = "home"
 ACCOUNT_LOGOUT_REDIRECT_URL = "home"
 
 ACCOUNT_USER_MODEL_USERNAME_FIELD = "username"
-ACCOUNT_AUTHENTICATION_METHOD = "username"
-ACCOUNT_USERNAME_REQUIRED = True
-ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_LOGIN_METHODS = {"username"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_SESSION_REMEMBER = True
 ACCOUNT_FORMS = {
@@ -199,36 +241,173 @@ ACCOUNT_FORMS = {
     "login": "users.forms.CustomLoginForm",
 }
 
+REDIS_HOST = env("REDIS_HOST", default="localhost")
+REDIS_PORT = env("REDIS_PORT", default="6379")
+REDIS_PASSWORD = env("REDIS_PASSWORD", default="")
+REDIS_DB = env("REDIS_DB", default="0")
+REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+
+Q_CLUSTER = {
+    "name": "tuxseo-q",
+    "timeout": 3600,  # 1 hour
+    "retry": 4800,  # 80 minutes
+    "workers": 4,
+    "max_attempts": 2,
+    "redis": REDIS_URL,
+    "error_reporter": {},
+}
+
+
+def extract_from_record(logger, name, event_dict):
+    """
+    Extract thread name and add them to the event dict.
+    """
+    record = event_dict["_record"]
+    event_dict["thread_id"] = record.thread
+    return event_dict
+
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "root": {"level": "INFO", "handlers": ["console"]},
+    "formatters": {
+        "simple": {"format": "%(levelname)s %(message)s"},
+        "verbose": {"format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s"},
+        "json": {"format": "%(message)s"},
+        "json_formatter": {
+            "()": structlog.stdlib.ProcessorFormatter,
+            "processors": [
+                extract_from_record,
+                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+                structlog.processors.JSONRenderer(),
+            ],
+        },
+        "plain_console": {
+            "()": structlog.stdlib.ProcessorFormatter,
+            "processor": structlog.dev.ConsoleRenderer(),
+        },
+        "key_value": {
+            "()": structlog.stdlib.ProcessorFormatter,
+            "processor": structlog.processors.KeyValueRenderer(key_order=["timestamp", "level", "event", "logger"]),
+        },
+    },
+    "filters": {
+        "require_debug_false": {
+            "()": "django.utils.log.RequireDebugFalse",
+        },
+        "require_debug_true": {
+            "()": "django.utils.log.RequireDebugTrue",
+        },
+    },
     "handlers": {
         "console": {
+            "filters": ["require_debug_true"],
             "class": "logging.StreamHandler",
-            "formatter": "app",
-            "level": "INFO",
+            "formatter": "plain_console",
+            "level": "DEBUG",
+        },
+        "prod_console": {
+            "class": "logging.StreamHandler",
+            "formatter": "plain_console",
+            "level": "DEBUG",
+        },
+        "json_console": {
+            "class": "logging.StreamHandler",
+            "formatter": "json_formatter",
+            "level": "DEBUG",
         },
     },
     "loggers": {
-        "django": {"handlers": ["console"], "level": "INFO", "propagate": True},
-    },
-    "formatters": {
-        "app": {
-            "format": ("%(asctime)s [%(levelname)-8s] " "(%(module)s.%(funcName)s) %(message)s"),
-            "datefmt": "%Y-%m-%d %H:%M:%S",
+        "django_structlog": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+        # django.server can log some low-level logs, but also does log requests,
+        # for some reason...
+        "django.server": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",  # so we don't chunder 404s, etc
+            "propagate": False,
+        },
+        "tuxseo": {
+            "level": "DEBUG",
+            "handlers": ["console"],
+            "propagate": False,
         },
     },
 }
 
-Q_CLUSTER = {
-    "name": "talendleads-q",
-    "timeout": 90,
-    "retry": 120,
-    "workers": 4,
-    "max_attempts": 2,
-    "redis": env("REDIS_URL"),
-}
+structlog_processors = [
+    structlog.contextvars.merge_contextvars,
+    structlog.stdlib.filter_by_level,
+    structlog.processors.TimeStamper(fmt="iso"),
+    structlog.stdlib.add_logger_name,
+    structlog.stdlib.add_log_level,
+    structlog.stdlib.PositionalArgumentsFormatter(),
+    structlog.processors.StackInfoRenderer(),
+    # structlog.processors.format_exc_info,
+]
+
+if SENTRY_DSN:
+    structlog_processors.append(
+        SentryProcessor(
+            event_level=logging.ERROR,
+            level=logging.INFO,
+            active=True,
+            as_context=True,
+            tag_keys="__all__",
+            verbose=True,
+        )
+    )
+
+structlog_processors.extend(
+    [
+        structlog.processors.UnicodeDecoder(),
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+    ]
+)
+
+structlog.configure(
+    processors=structlog_processors,
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    cache_logger_on_first_use=True,
+)
+
+if ENVIRONMENT == "prod":
+    LOGGING["loggers"]["django.server"]["level"] = "WARNING"
+    LOGGING["loggers"]["django_structlog"]["handlers"].append("json_console")
+    LOGGING["loggers"]["tuxseo"]["level"] = env("DJANGO_LOG_LEVEL", default="INFO")
+    LOGGING["loggers"]["tuxseo"]["handlers"].append("json_console")
+
+if SENTRY_DSN:
+    Q_CLUSTER["error_reporter"]["sentry"] = {"dsn": SENTRY_DSN}
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=ENVIRONMENT,
+        send_default_pii=False,
+        traces_sample_rate=1,
+        profile_session_sample_rate=1,
+        profile_lifecycle="trace",
+        integrations=[
+            DjangoIntegration(),
+            RedisIntegration(),
+        ],
+        disabled_integrations=[
+            LoggingIntegration(),
+        ],
+        attach_stacktrace=True,
+        include_local_variables=True,
+    )
 
 OPENAI_KEY = env("OPENAI_KEY")
 
@@ -239,29 +418,29 @@ DJSTRIPE_USE_NATIVE_JSONFIELD = True
 DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
 DJSTRIPE_WEBHOOK_VALIDATION = "retrieve_event"
 
+MAILGUN_API_KEY = env("MAILGUN_API_KEY", default="")
 ANYMAIL = {
-    "MAILGUN_API_KEY": env("MAILGUN_API_KEY"),
+    "MAILGUN_API_KEY": MAILGUN_API_KEY,
     "MAILGUN_SENDER_DOMAIN": "mg.gettalentleads.com",
 }
 DEFAULT_FROM_EMAIL = "Talent Leads <rasul@gettalentleads.email>"
 SERVER_EMAIL = "Talent Leads <error@gettalentleads.email>"
 
 if DEBUG:
-    EMAIL_HOST = "localhost"
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = "mailhog"  # Use the service name from docker-compose
     EMAIL_PORT = 1025
+    EMAIL_USE_TLS = False
+    EMAIL_HOST_USER = ""
+    EMAIL_HOST_PASSWORD = ""
 else:
-    EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
+    if MAILGUN_API_KEY == "":
+        EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    else:
+        EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
 
 HNJOBS_API_TOKEN = env("HNJOBS_API_TOKEN")
 HNJOBS_HOST = env("HNJOBS_HOST")
-
-# Sentry
-sentry_sdk.init(
-    dsn=env("SENTRY_DSN"),
-    integrations=[
-        DjangoIntegration(),
-    ],
-)
 
 if DEBUG:
     CACHES = {
@@ -273,6 +452,6 @@ else:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
-            "LOCATION": env("REDIS_URL"),
+            "LOCATION": REDIS_URL,
         }
     }
