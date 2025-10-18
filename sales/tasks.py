@@ -1,14 +1,14 @@
-import logging
-
 import httpx
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.db.models import Q
 from django_q.tasks import async_task
 
+from talentleads.utils import get_talentleads_logger
+
 from .models import Email
 
-logger = logging.getLogger(__file__)
+logger = get_talentleads_logger(__name__)
 
 
 def send_marketing_emails_task():
@@ -48,7 +48,7 @@ def send_marketing_email(person):
     message = f"""
 Hi {first_name},
 
-I saw on HackerNews that you are hiring at {person['company__name']}.
+I saw on HackerNews that you are hiring at {person["company__name"]}.
 Can I ask you a few questions about your hiring process?
 
 Best,

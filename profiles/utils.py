@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from profiles.choices import LevelChoices
+
 list_of_expected_keys = [
     "location",
     "city",
@@ -46,7 +48,7 @@ def check_years_of_experience_value(years: int, text: str):
 
 
 def check_that_level_is_one_the_allowed_values(level: str) -> str:
-    if level in ["Senior", "Mid-level", "Junior", "Principal", "C-Level"]:
+    if level in LevelChoices.choices:
         return level
     else:
         return ""

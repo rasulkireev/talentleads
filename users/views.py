@@ -1,5 +1,3 @@
-import logging
-
 import stripe
 from allauth.account.adapter import get_adapter
 from allauth.account.models import EmailAddress
@@ -14,14 +12,15 @@ from django_q.tasks import async_task
 from djstripe import models, settings as djstripe_settings
 from djstripe.event_handlers import djstripe_receiver
 
+from talentleads.utils import get_talentleads_logger
 from utils.views import add_users_context
 
-from .forms import CreateOutreachTemplateForm, SupportForm, UpdateOutreachTemplateForm
-from .models import CustomUser, OutreachTemplate
-from .tasks import email_support_request
+from users.forms import CreateOutreachTemplateForm, SupportForm, UpdateOutreachTemplateForm
+from users.models import CustomUser, OutreachTemplate
+from users.tasks import email_support_request
 
 stripe.api_key = djstripe_settings.djstripe_settings.STRIPE_SECRET_KEY
-logger = logging.getLogger(__file__)
+logger = get_talentleads_logger(__name__)
 
 
 class UserSettingsView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):

@@ -1,11 +1,10 @@
-import logging
-
 from django.core.management.base import BaseCommand
 from django_q.models import Schedule
 
+from talentleads.utils import get_talentleads_logger
 from users.schedules import schedules
 
-logger = logging.getLogger(__file__)
+logger = get_talentleads_logger(__name__)
 
 
 class Command(BaseCommand):

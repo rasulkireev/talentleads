@@ -1,5 +1,3 @@
-import logging
-
 from django import forms
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -9,7 +7,7 @@ from django.views.generic import DetailView, FormView
 from django_filters.views import FilterView
 from django_q.tasks import async_task
 
-from talentleads.utils import floor_to_tens
+from talentleads.utils import floor_to_tens, get_talentleads_logger
 from users.models import Outreach, OutreachTemplate
 from utils.views import add_users_context
 
@@ -17,7 +15,7 @@ from .filters import ProfileFilter
 from .models import Profile
 from .tasks import get_hn_pages_to_analyze, send_outreach_email_task
 
-logger = logging.getLogger(__file__)
+logger = get_talentleads_logger(__name__)
 
 
 class ProfileListView(FilterView):
