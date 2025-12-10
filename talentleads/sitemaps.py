@@ -2,7 +2,8 @@ from django.contrib import sitemaps
 from django.contrib.sitemaps import GenericSitemap
 from django.urls import reverse
 
-from profiles.models import Profile
+from blog.models import BlogPost
+from blog.choices import BlogPostStatus
 
 
 class StaticViewSitemap(sitemaps.Sitemap):
@@ -11,7 +12,7 @@ class StaticViewSitemap(sitemaps.Sitemap):
     def items(self):
         return [
             "home",
-            "profiles",
+            "pricing",
         ]
 
     def location(self, item):
@@ -21,9 +22,9 @@ class StaticViewSitemap(sitemaps.Sitemap):
 sitemaps = {
     "sitemaps": {
         "static": StaticViewSitemap,
-        "profiles": GenericSitemap(
+        "blog": GenericSitemap(
             {
-                "queryset": Profile.objects.all(),
+                "queryset": BlogPost.objects.filter(status=BlogPostStatus.PUBLISHED),
                 "date_field": "modified",
             }
         ),
