@@ -29,6 +29,6 @@ def add_users_context(context, user):
     try:
         context["email_verified"] = EmailAddress.objects.get_for_user(user, user.email).verified
     except EmailAddress.DoesNotExist:
-        logger.error("User doesn't have a Verfiied Email")
+        logger.warning("User doesn't have a Verfiied Email")
 
     return context
