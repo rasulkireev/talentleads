@@ -10,6 +10,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
+      ('users', '0006_customuser_api_token'),
     ]
 
     operations = [
