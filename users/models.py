@@ -1,17 +1,34 @@
+import secrets
 import uuid
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.urls import reverse
 from model_utils.models import TimeStampedModel
+
+
+def generate_api_token():
+    return secrets.token_urlsafe(48)
 
 
 class CustomUser(AbstractUser):
     name = models.CharField(max_length=20, blank=True)
+    api_token = models.CharField(
+        max_length=64,
+        blank=True,
+        unique=True,
+        db_index=True,
+        default=generate_api_token,
+        help_text="API token for the user. Generated automatically when the user is created.",
+    )
 
     class Meta:
         db_table = "auth_user"
+
+    def regenerate_api_token(self):
+        """Generate a new API token"""
+        self.api_token = secrets.token_urlsafe(48)
+        self.save(update_fields=["api_token"])
 
 
 class OutreachTemplate(TimeStampedModel):

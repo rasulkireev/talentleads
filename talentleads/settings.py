@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     "djstripe",
     "anymail",
     "pages.apps.PagesConfig",
+    "blog.apps.BlogConfig",
     "users.apps.UsersConfig",
     "profiles.apps.ProfilesConfig",
     "sales.apps.SalesConfig",

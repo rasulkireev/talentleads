@@ -3,6 +3,7 @@
 import markdown as md
 from django import template
 from django.template.defaultfilters import stringfilter
+from django.utils.safestring import mark_safe
 
 register = template.Library()
 
@@ -18,11 +19,15 @@ extension_configs = {
 @register.filter()
 @stringfilter
 def markdown(value):
-    return md.markdown(
+    html = md.markdown(
         value,
         extensions=[
-            "markdown.extensions.codehilite",
             "markdown.extensions.fenced_code",
+            "markdown.extensions.codehilite",
+            "markdown.extensions.tables",
+            "markdown.extensions.nl2br",
+            "markdown.extensions.sane_lists",
         ],
         extension_configs=extension_configs,
     )
+    return mark_safe(html)
