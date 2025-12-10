@@ -401,7 +401,7 @@ if ENVIRONMENT == "prod":
     LOGGING["loggers"]["tuxseo"]["level"] = env("DJANGO_LOG_LEVEL", default="INFO")
     LOGGING["loggers"]["tuxseo"]["handlers"].append("json_console")
 
-if SENTRY_DSN:
+if SENTRY_DSN and env("ENVIRONMENT") == "prod":
     Q_CLUSTER["error_reporter"]["sentry"] = {"dsn": SENTRY_DSN}
     sentry_sdk.init(
         dsn=SENTRY_DSN,
